@@ -6,13 +6,12 @@ pub fn Bmp(comptime bpp: u6) type {
     return struct {
         width: usize,
         height: usize,
+        pixels: []align(1) Rgb,
         px_len: usize = bytes_per_px,
         byte_width: usize,
         row_width: usize,
-        file: std.fs.File,
-        writer: std.io.BufferedWriter(4096, std.fs.File.Writer),
 
-        pub const bytes_per_px = bpp / 8;
+        pub const bytes_per_px: usize = bpp / 8;
 
         pub const Rgb = switch (bpp) {
             1, 4, 8 => union { b: u8, g: u8, r: u8, a: u8 },
@@ -22,54 +21,46 @@ pub fn Bmp(comptime bpp: u6) type {
             else => unreachable,
         };
 
-        pub fn init(info: bmp.InfoHeader, filename: []const u8) !@This() {
-            const byte_width: usize = bytes_per_px * zut.mem.intCast(usize, info.width);
+        pub fn init(width: usize, height: usize, data: []u8) !@This() {
+            const byte_width = bytes_per_px * width;
             const row_width: usize = @intCast(zut.mem.aligned(@intCast(byte_width), 4));
-            const data_size: u32 = zut.mem.intCast(u32, row_width) * zut.mem.intCast(u32, info.height);
+
+            return @This(){
+                .width = @intCast(width),
+                .height = @intCast(height),
+                .pixels = std.mem.bytesAsSlice(Rgb, data),
+                .row_width = @intCast(row_width),
+                .byte_width = byte_width,
+            };
+        }
+
+        pub fn write(self: *@This(), w: anytype, info: ?bmp.InfoHeader, palette: ?[]u8) !void {
+            const data_size: u32 = zut.mem.intCast(u32, self.row_width) * zut.mem.intCast(u32, self.height);
             const palette_size = if (bpp > 8) 0 else (@as(u16, 1) << zut.mem.intCast(u4, bpp)) * 4;
             const offset: u32 = @intCast(bmp.FileHeader.len + bmp.InfoHeader.len + palette_size);
 
-            const file = try std.fs.cwd().createFile(filename, .{});
-            var w = std.io.bufferedWriter(file.writer());
-
-            try zut.mem.packedWrite(bmp.FileHeader{ .offset = offset, .size = offset + data_size }, &w);
-            var info_header = info;
+            try zut.mem.packedWrite(bmp.FileHeader{ .offset = offset, .size = offset + data_size }, w);
+            var info_header = info orelse bmp.InfoHeader{};
+            info_header.width = @intCast(self.width);
+            info_header.height = @intCast(self.height);
             info_header.size = bmp.InfoHeader.len;
             info_header.size_image = @intCast(data_size);
             info_header.bit_count = bpp;
-            try zut.mem.packedWrite(info_header, &w);
+            try zut.mem.packedWrite(info_header, w);
 
-            return @This(){
-                .width = @intCast(info.width),
-                .height = @intCast(info.height),
-                .row_width = @intCast(row_width),
-                .byte_width = byte_width,
-                .file = file,
-                .writer = w,
-            };
-        }
+            if (palette) |p| {
+                _ = try w.write(p);
+            }
 
-        pub fn pixels(_: @This(), buffer: []u8) []align(1) Rgb {
-            return std.mem.bytesAsSlice(Rgb, buffer);
-        }
-
-        pub fn px(_: @This(), buffer: []u8, i: usize) *align(1) if (bytes_per_px < 2) u8 else Rgb {
-            comptime if (bytes_per_px < 2) {
-                return buffer[i];
-            };
-            return std.mem.bytesAsValue(Rgb, buffer[i .. i + bytes_per_px]);
-        }
-
-        pub fn writeData(self: *@This(), data: []u8) !void {
-            defer self.file.close();
+            const data = std.mem.sliceAsBytes(self.pixels);
             for (0..self.height) |y| {
-                _ = try self.writer.write(data[y * self.byte_width .. y * self.byte_width + self.byte_width]);
+                _ = try w.write(data[y * self.byte_width .. y * self.byte_width + self.byte_width]);
                 for (0..self.row_width - self.byte_width) |_| {
-                    _ = try self.writer.write(&[_]u8{0});
+                    _ = try w.write(&[_]u8{0});
                 }
             }
 
-            try self.writer.flush();
+            try w.flush();
         }
     };
 }
@@ -88,8 +79,8 @@ pub const bmp = struct {
         pub const len = zut.mem.packedSize(InfoHeader);
 
         size: u32 = 0,
-        width: i32,
-        height: i32,
+        width: i32 = 0,
+        height: i32 = 0,
         planes: u16 = 1,
         bit_count: u16 = 0,
         compression: u32 = 0,

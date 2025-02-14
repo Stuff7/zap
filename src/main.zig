@@ -46,21 +46,23 @@ pub fn main() !void {
 
         const width = 16;
         const height = 16;
-        var bmp = try zap.Bmp(24).init(.{ .width = width, .height = height }, args[2]);
+        var buffer = [_]u8{0} ** (width * height * zap.Bmp(16).bytes_per_px);
+        var bmp = try zap.Bmp(16).init(width, height, &buffer);
         zut.dbg.dump(bmp);
-        var buffer = [_]u8{0} ** (width * height * 3);
 
-        const pixels = bmp.pixels(&buffer);
         for (0..bmp.width - 4) |i| {
             const off_l = 2;
             const off_r = bmp.width - 3;
 
-            pixels[2 * bmp.width + 2 + i].g = 31;
-            pixels[off_r * bmp.width + off_l + i].g = 31;
-            pixels[(i + off_l) * bmp.width + off_l].g = 31;
-            pixels[(i + off_l) * bmp.width + off_r].g = 31;
+            bmp.pixels[2 * bmp.width + 2 + i].g = 31;
+            bmp.pixels[off_r * bmp.width + off_l + i].g = 31;
+            bmp.pixels[(i + off_l) * bmp.width + off_l].g = 31;
+            bmp.pixels[(i + off_l) * bmp.width + off_r].g = 31;
         }
 
-        try bmp.writeData(&buffer);
+        const file = try std.fs.cwd().createFile(args[2], .{});
+        defer file.close();
+        var w = std.io.bufferedWriter(file.writer());
+        try bmp.write(&w, null, null);
     }
 }
