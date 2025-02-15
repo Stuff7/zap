@@ -15,7 +15,6 @@ pub fn main() !void {
         zut.dbg.usage(args[0], .{
             "fl32", "Test fl32 format",
             "bmp" , "Write a test bmp file",
-            "ktx" , "Read a ktx file",
         });
         // zig fmt: on
         return;
@@ -27,15 +26,18 @@ pub fn main() !void {
             return;
         }
 
+        const file = try std.fs.cwd().openFile(args[2], .{});
+        defer file.close();
+
         const fl32 = zap.Fl32{
             .width = 4,
             .height = 2,
             .data = @constCast(&[_]f32{ 1, 2, 3, 4, 5, 6, 7, 8 }),
         };
         zut.dbg.dump(fl32);
-        try fl32.writeFile(args[2]);
+        try fl32.write(file.writer());
 
-        const fl32r = try zap.Fl32.readFile(allocator, args[2]);
+        const fl32r = try zap.Fl32.read(allocator, file.reader());
         defer allocator.free(fl32r.data);
         zut.dbg.dump(fl32r);
     } else if (std.mem.eql(u8, args[1], "bmp")) {
