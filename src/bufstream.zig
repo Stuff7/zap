@@ -10,9 +10,10 @@ pub const BufStream = struct {
         const file = try std.fs.cwd().openFile(path, .{});
         defer file.close();
 
-        return BufStream{
-            .buf = try file.readToEndAlloc(allocator, 100e6),
-        };
+        return BufStream{ .buf = try if (file.metadata()) |m|
+            file.readToEndAllocOptions(allocator, m.size(), m.size(), 1, null)
+        else |_|
+            file.readToEndAlloc(allocator, 100e6) };
     }
 
     pub fn slice(self: BufStream, offset: usize, size: usize) !BufStream {
