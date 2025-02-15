@@ -62,7 +62,6 @@ pub fn main() !void {
 
         const file = try std.fs.cwd().createFile(args[2], .{});
         defer file.close();
-        var w = std.io.bufferedWriter(file.writer());
-        try bmp.write(&w, null, null);
+        try bmp.write(file.writer(), null, null);
     }
 }

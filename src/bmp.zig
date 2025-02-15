@@ -34,19 +34,20 @@ pub fn Bmp(comptime bpp: u6) type {
             };
         }
 
-        pub fn write(self: *@This(), w: anytype, info: ?bmp.InfoHeader, palette: ?[]u8) !void {
+        pub fn write(self: *@This(), writer: anytype, info: ?bmp.InfoHeader, palette: ?[]u8) !void {
             const data_size: u32 = zut.mem.intCast(u32, self.row_width) * zut.mem.intCast(u32, self.height);
             const palette_size = if (bpp > 8) 0 else (@as(u16, 1) << zut.mem.intCast(u4, bpp)) * 4;
             const offset: u32 = @intCast(bmp.FileHeader.len + bmp.InfoHeader.len + palette_size);
 
-            try zut.mem.packedWrite(bmp.FileHeader{ .offset = offset, .size = offset + data_size }, w);
+            var w = std.io.bufferedWriter(writer);
+            try zut.mem.packedWrite(bmp.FileHeader{ .offset = offset, .size = offset + data_size }, &w);
             var info_header = info orelse bmp.InfoHeader{};
             info_header.width = @intCast(self.width);
             info_header.height = @intCast(self.height);
             info_header.size = bmp.InfoHeader.len;
             info_header.size_image = @intCast(data_size);
             info_header.bit_count = bpp;
-            try zut.mem.packedWrite(info_header, w);
+            try zut.mem.packedWrite(info_header, &w);
 
             if (palette) |p| {
                 _ = try w.write(p);
