@@ -108,40 +108,26 @@ pub const Instruction = union(enum(u16)) {
             .memory_model => .{ .memory_model = try mem.packedRead(spirv.MemoryModel, &r, null) },
             .entry_point => {
                 var s = try mem.packedRead(spirv.EntryPoint, &r, "name");
-
                 s.name = try readString(allocator, &r);
                 s.interface = try readToEnd(u32, allocator, &r);
-
                 return .{ .entry_point = s };
             },
             .capability => .{ .capability = std.mem.bytesToValue(spirv.Capability, words) },
-            .type_void => {
-                const s = try mem.packedRead(spirv.TypeVoid, &r, null);
-                return .{ .type_void = s };
-            },
-            .type_int => {
-                const s = try mem.packedRead(spirv.TypeInt, &r, null);
-                return .{ .type_int = s };
-            },
+            .type_void => return .{ .type_void = try mem.packedRead(spirv.TypeVoid, &r, null) },
+            .type_int => return .{ .type_int = try mem.packedRead(spirv.TypeInt, &r, null) },
             .type_float => {
                 var s = try mem.packedRead(spirv.TypeFloat, &r, "encoding");
                 s.encoding = r.readAs(u32) catch null;
                 return .{ .type_float = s };
             },
-            .type_vector => {
-                const s = try mem.packedRead(spirv.TypeVector, &r, null);
-                return .{ .type_vector = s };
-            },
+            .type_vector => return .{ .type_vector = try mem.packedRead(spirv.TypeVector, &r, null) },
             .type_matrix => return .{ .type_matrix = try mem.packedRead(spirv.TypeMatrix, &r, null) },
             .type_struct => {
                 var s = try mem.packedRead(spirv.TypeStruct, &r, "member_ids");
                 s.member_ids = try readToEnd(u32, allocator, &r);
                 return .{ .type_struct = s };
             },
-            .type_pointer => {
-                const s = try mem.packedRead(spirv.TypePointer, &r, null);
-                return .{ .type_pointer = s };
-            },
+            .type_pointer => return .{ .type_pointer = try mem.packedRead(spirv.TypePointer, &r, null) },
             .type_function => {
                 var s = try mem.packedRead(spirv.TypeFunction, &r, "parameter_ids");
                 s.parameter_ids = try readToEnd(u32, allocator, &r);
