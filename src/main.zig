@@ -2,6 +2,8 @@ const std = @import("std");
 const zap = @import("zap");
 const zut = @import("zut");
 
+const dbg = zut.dbg;
+
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}).init;
     defer _ = gpa.deinit();
@@ -15,6 +17,7 @@ pub fn main() !void {
         zut.dbg.usage(args[0], .{
             "fl32", "Test fl32 format",
             "bmp" , "Write a test bmp file",
+            "spirv" , "Read a Spir-V file",
         });
         // zig fmt: on
         return;
@@ -65,5 +68,15 @@ pub fn main() !void {
         const file = try std.fs.cwd().createFile(args[2], .{});
         defer file.close();
         try bmp.write(file.writer(), null, null);
+    } else if (std.mem.eql(u8, args[1], "spirv")) {
+        if (args.len < 3) {
+            zut.dbg.usage(args[1], .{ "<file>", "Spir-V file path" });
+            return;
+        }
+
+        const file = try std.fs.cwd().openFile(args[2], .{});
+        defer file.close();
+
+        zut.dbg.dump(try zap.SpirV.read(file.reader()));
     }
 }
