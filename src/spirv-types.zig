@@ -246,6 +246,47 @@ pub const Label = struct {
     result_id: u32,
 };
 
+pub const Load = struct {
+    result_type_id: u32,
+    result_id: u32,
+    pointer_id: u32,
+    memory_operands: []u32,
+};
+
+pub const FAdd = struct {
+    result_type_id: u32,
+    result_id: u32,
+    operand1_id: u32,
+    operand2_id: u32,
+};
+
+pub const Store = struct {
+    pointer_id: u32,
+    object_id: u32,
+    memory_operands: []u32,
+};
+
+pub const AccessChain = struct {
+    result_type_id: u32,
+    result_id: u32,
+    base_id: u32,
+    index_ids: []u32,
+};
+
+pub const MatrixTimesMatrix = struct {
+    result_type_id: u32,
+    result_id: u32,
+    left_matrix_id: u32,
+    right_matrix_id: u32,
+};
+
+pub const CompositeExtract = struct {
+    result_type_id: u32,
+    result_id: u32,
+    composite_id: u32,
+    index_ids: []u32,
+};
+
 pub const FunctionControl = enum(u32) {
     fn_inline = 0,
     dont_inline = 1,

@@ -57,8 +57,14 @@ pub const Instruction = union(enum(u16)) {
     constant: spirv.Constant = 43,
     function: spirv.Function = 54,
     variable: spirv.Variable = 59,
+    load: spirv.Load = 61,
+    store: spirv.Store = 62,
+    access_chain: spirv.AccessChain = 65,
     decorate: spirv.Decorate = 71,
     member_decorate: spirv.MemberDecorate = 72,
+    composite_extract: spirv.CompositeExtract = 81,
+    fadd: spirv.FAdd = 129,
+    matrix_times_matrix: spirv.MatrixTimesMatrix = 146,
     label: spirv.Label = 248,
 
     pub fn read(allocator: Allocator, reader: anytype) !?Instruction {
@@ -152,6 +158,21 @@ pub const Instruction = union(enum(u16)) {
                 s.initializer_id = r.readAs(u32) catch null;
                 return .{ .variable = s };
             },
+            .load => {
+                var s = try mem.packedRead(spirv.Load, &r, "memory_operands");
+                s.memory_operands = try readToEnd(u32, allocator, &r);
+                return .{ .load = s };
+            },
+            .store => {
+                var s = try mem.packedRead(spirv.Store, &r, "memory_operands");
+                s.memory_operands = try readToEnd(u32, allocator, &r);
+                return .{ .store = s };
+            },
+            .access_chain => {
+                var s = try mem.packedRead(spirv.AccessChain, &r, "index_ids");
+                s.index_ids = try readToEnd(u32, allocator, &r);
+                return .{ .access_chain = s };
+            },
             .decorate => {
                 const s = try mem.packedRead(spirv.Decorate, &r, null);
                 return .{ .decorate = s };
@@ -160,6 +181,13 @@ pub const Instruction = union(enum(u16)) {
                 const s = try mem.packedRead(spirv.MemberDecorate, &r, null);
                 return .{ .member_decorate = s };
             },
+            .composite_extract => {
+                var s = try mem.packedRead(spirv.CompositeExtract, &r, "index_ids");
+                s.index_ids = try readToEnd(u32, allocator, &r);
+                return .{ .composite_extract = s };
+            },
+            .fadd => return .{ .fadd = try mem.packedRead(spirv.FAdd, &r, null) },
+            .matrix_times_matrix => return .{ .matrix_times_matrix = try mem.packedRead(spirv.MatrixTimesMatrix, &r, null) },
             .label => return .{ .label = try mem.packedRead(spirv.Label, &r, null) },
             else => null,
         };
