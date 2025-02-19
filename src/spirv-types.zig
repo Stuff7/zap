@@ -21,13 +21,13 @@ pub const MemoryModelType = enum(u32) {
 };
 
 pub const EntryPoint = struct {
-    execution_mode: ExecutionMode,
+    execution_mode: ExecutionModeType,
     id: u32,
     name: []u8,
     interface: []u32,
 };
 
-pub const ExecutionMode = enum(u32) {
+pub const ExecutionModeType = enum(u32) {
     invocations = 0,
     spacing_equal = 1,
     spacing_fractional_even = 2,
@@ -242,6 +242,13 @@ pub const Function = struct {
     fn_type_id: u32,
 };
 
+pub const FunctionControl = enum(u32) {
+    fn_inline = 0,
+    dont_inline = 1,
+    pure = 2,
+    fn_const = 3,
+};
+
 pub const Label = struct {
     result_id: u32,
 };
@@ -280,6 +287,13 @@ pub const MatrixTimesMatrix = struct {
     right_matrix_id: u32,
 };
 
+pub const MatrixTimesVector = struct {
+    result_type_id: u32,
+    result_id: u32,
+    matrix_id: u32,
+    vector_id: u32,
+};
+
 pub const CompositeExtract = struct {
     result_type_id: u32,
     result_id: u32,
@@ -287,11 +301,114 @@ pub const CompositeExtract = struct {
     index_ids: []u32,
 };
 
-pub const FunctionControl = enum(u32) {
-    fn_inline = 0,
-    dont_inline = 1,
-    pure = 2,
-    fn_const = 3,
+pub const CompositeConstruct = struct {
+    result_type_id: u32,
+    result_id: u32,
+    constituent_ids: []u32,
+};
+
+pub const ExecutionMode = struct {
+    entry_point_id: u32,
+    mode: ExecutionModeType,
+    operands: []u32, // TODO: https://registry.khronos.org/SPIR-V/specs/unified1/SPIRV.html#Execution_Mode
+};
+
+pub const TypeImage = struct {
+    result_id: u32,
+    sampled_type_id: u32,
+    dim: Dim,
+    depth: Depth,
+    arrayed: Arrayed,
+    ms: Ms,
+    sampeld: Sampled,
+    format: ImageFormat,
+    access_qualifier: ?AccessQualifier,
+};
+
+pub const Dim = enum(u32) {
+    dim1d = 0,
+    dim2d = 1,
+    dim3d = 2,
+    cube = 3,
+    rect = 4,
+    buffer = 5,
+    subpass_data = 6,
+};
+
+pub const Depth = enum(u32) {
+    no_depth = 0,
+    depth = 1,
+    no_indication = 2,
+};
+
+pub const Arrayed = enum(u32) {
+    non_arrayed = 0,
+    arrayed = 1,
+};
+
+pub const Ms = enum(u32) {
+    single_sampled = 0,
+    multi_sampled = 1,
+};
+
+pub const Sampled = enum(u32) {
+    run_time = 0,
+    sampling_op_compatible = 1,
+    rw_op_compatible = 2,
+};
+
+pub const ImageFormat = enum(u32) {
+    unknown = 0,
+    rgba32f = 1,
+    rgba16f = 2,
+    r32f = 3,
+    rgba8 = 4,
+    rgba8_snorm = 5,
+    rg32f = 6,
+    rg16f = 7,
+    r11f_g11f_b10f = 8,
+    r16f = 9,
+    rgba16 = 10,
+    rgb10_a2 = 11,
+    rg16 = 12,
+    rg8 = 13,
+    r16 = 14,
+    r8 = 15,
+    rgba16_snorm = 16,
+    rg16_snorm = 17,
+    rg8_snorm = 18,
+    r16_snorm = 19,
+    r8_snorm = 20,
+    rgba32i = 21,
+    rgba16i = 22,
+    rgba8i = 23,
+    r32i = 24,
+    rg32i = 25,
+    rg16i = 26,
+    rg8i = 27,
+    r16i = 28,
+    r8i = 29,
+    rgba32ui = 30,
+    rgba16ui = 31,
+    rgba8ui = 32,
+    r32ui = 33,
+    rgb10a2ui = 34,
+    rg32ui = 35,
+    rg16ui = 36,
+    rg8ui = 37,
+    r16ui = 38,
+    r8ui = 39,
+};
+
+pub const AccessQualifier = enum(u32) {
+    read_only = 0,
+    write_only = 1,
+    read_write = 2,
+};
+
+pub const TypeSampledImage = struct {
+    result_id: u32,
+    image_type_id: u32,
 };
 
 pub const Op = enum(u16) {

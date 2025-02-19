@@ -89,6 +89,9 @@ pub const BufStream = struct {
             while (self.buf[i] != delimeter) {
                 len += 1;
                 i += 1;
+                if (i >= self.buf.len) {
+                    break;
+                }
             }
 
             return len;

@@ -45,31 +45,41 @@ pub const Instruction = union(enum(u16)) {
     ext_inst_import: spirv.ExtInstImport = 11,
     memory_model: spirv.MemoryModel = 14,
     entry_point: spirv.EntryPoint = 15,
+    execution_mode: spirv.ExecutionMode = 16,
     capability: spirv.Capability = 17,
     type_void: spirv.TypeVoid = 19,
     type_int: spirv.TypeInt = 21,
     type_float: spirv.TypeFloat = 22,
     type_vector: spirv.TypeVector = 23,
     type_matrix: spirv.TypeMatrix = 24,
+    type_image: spirv.TypeImage = 25,
+    type_sampled_image: spirv.TypeSampledImage = 27,
     type_struct: spirv.TypeStruct = 30,
     type_pointer: spirv.TypePointer = 32,
     type_function: spirv.TypeFunction = 33,
     constant: spirv.Constant = 43,
     function: spirv.Function = 54,
+    function_end: void = 56,
     variable: spirv.Variable = 59,
     load: spirv.Load = 61,
     store: spirv.Store = 62,
     access_chain: spirv.AccessChain = 65,
     decorate: spirv.Decorate = 71,
     member_decorate: spirv.MemberDecorate = 72,
+    composite_construct: spirv.CompositeConstruct = 80,
     composite_extract: spirv.CompositeExtract = 81,
     fadd: spirv.FAdd = 129,
+    matrix_times_vector: spirv.MatrixTimesVector = 145,
     matrix_times_matrix: spirv.MatrixTimesMatrix = 146,
     label: spirv.Label = 248,
+    op_return: void = 253,
 
     pub fn read(allocator: Allocator, reader: anytype) !?Instruction {
         var code: spirv.Op = undefined;
-        _ = try reader.read(std.mem.asBytes(&code));
+
+        if (try reader.read(std.mem.asBytes(&code)) == 0) {
+            return null;
+        }
 
         var word_count: u16 = undefined;
         _ = try reader.read(std.mem.asBytes(&word_count));
@@ -112,6 +122,11 @@ pub const Instruction = union(enum(u16)) {
                 s.interface = try readToEnd(u32, allocator, &r);
                 return .{ .entry_point = s };
             },
+            .execution_mode => {
+                var s = try mem.packedRead(spirv.ExecutionMode, &r, "operands");
+                s.operands = try readToEnd(u32, allocator, &r);
+                return .{ .execution_mode = s };
+            },
             .capability => .{ .capability = std.mem.bytesToValue(spirv.Capability, words) },
             .type_void => return .{ .type_void = try mem.packedRead(spirv.TypeVoid, &r, null) },
             .type_int => return .{ .type_int = try mem.packedRead(spirv.TypeInt, &r, null) },
@@ -122,6 +137,14 @@ pub const Instruction = union(enum(u16)) {
             },
             .type_vector => return .{ .type_vector = try mem.packedRead(spirv.TypeVector, &r, null) },
             .type_matrix => return .{ .type_matrix = try mem.packedRead(spirv.TypeMatrix, &r, null) },
+            .type_image => {
+                var s = try mem.packedRead(spirv.TypeImage, &r, "access_qualifier");
+                _ = r.read(std.mem.asBytes(&s.access_qualifier)) catch {
+                    s.access_qualifier = null;
+                };
+                return .{ .type_image = s };
+            },
+            .type_sampled_image => return .{ .type_sampled_image = try mem.packedRead(spirv.TypeSampledImage, &r, null) },
             .type_struct => {
                 var s = try mem.packedRead(spirv.TypeStruct, &r, "member_ids");
                 s.member_ids = try readToEnd(u32, allocator, &r);
@@ -139,6 +162,7 @@ pub const Instruction = union(enum(u16)) {
                 return .{ .constant = s };
             },
             .function => return .{ .function = try mem.packedRead(spirv.Function, &r, null) },
+            .function_end => return .function_end,
             .variable => {
                 var s = try mem.packedRead(spirv.Variable, &r, "initializer_id");
                 s.initializer_id = r.readAs(u32) catch null;
@@ -167,14 +191,21 @@ pub const Instruction = union(enum(u16)) {
                 const s = try mem.packedRead(spirv.MemberDecorate, &r, null);
                 return .{ .member_decorate = s };
             },
+            .composite_construct => {
+                var s = try mem.packedRead(spirv.CompositeConstruct, &r, "constituent_ids");
+                s.constituent_ids = try readToEnd(u32, allocator, &r);
+                return .{ .composite_construct = s };
+            },
             .composite_extract => {
                 var s = try mem.packedRead(spirv.CompositeExtract, &r, "index_ids");
                 s.index_ids = try readToEnd(u32, allocator, &r);
                 return .{ .composite_extract = s };
             },
             .fadd => return .{ .fadd = try mem.packedRead(spirv.FAdd, &r, null) },
+            .matrix_times_vector => return .{ .matrix_times_vector = try mem.packedRead(spirv.MatrixTimesVector, &r, null) },
             .matrix_times_matrix => return .{ .matrix_times_matrix = try mem.packedRead(spirv.MatrixTimesMatrix, &r, null) },
             .label => return .{ .label = try mem.packedRead(spirv.Label, &r, null) },
+            .op_return => return .op_return,
             else => null,
         };
     }
