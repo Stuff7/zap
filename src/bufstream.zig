@@ -51,13 +51,17 @@ pub const BufStream = struct {
     }
 
     pub fn readAs(self: *BufStream, comptime T: type) !T {
+        return readAsEndian(self, T, .big);
+    }
+
+    pub fn readAsEndian(self: *BufStream, comptime T: type, endian: std.builtin.Endian) !T {
         const bytes = @sizeOf(T);
         const start = self.i;
         self.i += bytes;
 
         try dbg.rtAssert(self.i <= self.buf.len, error.ReadAs);
 
-        return std.mem.readInt(T, self.buf[start .. start + bytes][0..bytes], .big);
+        return std.mem.readInt(T, self.buf[start .. start + bytes][0..bytes], endian);
     }
 
     pub fn readTo(self: *BufStream, out: []u8) !void {

@@ -77,6 +77,10 @@ pub fn main() !void {
         const file = try std.fs.cwd().openFile(args[2], .{});
         defer file.close();
 
-        zut.dbg.dump(try zap.SpirV.read(file.reader()));
+        const spirv = try zap.SpirV.read(allocator, file.reader());
+        defer spirv.deinit();
+
+        zut.dbg.dump(spirv);
+        try spirv.attributes();
     }
 }

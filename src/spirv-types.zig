@@ -1,3 +1,21 @@
+pub const Source = struct {
+    language: SourceLanguage,
+    version: u32,
+    file_id: ?u32,
+    source: ?[]u8,
+};
+
+pub const Name = struct {
+    target_id: u32,
+    name: []u8,
+};
+
+pub const MemberName = struct {
+    type_id: u32,
+    id: u32,
+    name: []u8,
+};
+
 pub const ExtInstImport = struct {
     result_id: u32,
     name: []u8,
@@ -16,6 +34,221 @@ pub const MemoryModel = struct {
     typ: MemoryModelType,
 };
 
+pub const EntryPoint = struct {
+    execution_model: ExecutionModel,
+    id: u32,
+    name: []u8,
+    interface: []u32,
+};
+
+pub const ExecutionMode = struct {
+    entry_point_id: u32,
+    mode: ExecutionModeType,
+    operands: []u32,
+};
+
+pub const Type = struct {
+    result_id: u32,
+    info: union(enum) {
+        void,
+        bool,
+        int: TypeInt,
+        float: TypeFloat,
+        vector: TypeVector,
+        matrix: TypeMatrix,
+        image: TypeImage,
+        sampled_image: TypeSampledImage,
+        array: TypeArray,
+        @"struct": TypeStruct,
+        function: TypeFunction,
+    },
+};
+
+pub const TypeInt = struct {
+    width: u32,
+    signedness: Signedness,
+};
+
+pub const TypeFloat = struct {
+    width: u32,
+    encoding: ?u32,
+};
+
+pub const TypeVector = struct {
+    component_type: u32,
+    component_count: u32,
+};
+
+pub const TypeMatrix = struct {
+    column_type_id: u32,
+    column_count: u32,
+};
+
+pub const TypeImage = struct {
+    sampled_type_id: u32,
+    dim: Dim,
+    depth: Depth,
+    arrayed: Arrayed,
+    ms: Ms,
+    sampeld: Sampled,
+    format: ImageFormat,
+    access_qualifier: ?AccessQualifier,
+};
+
+pub const TypeSampledImage = struct {
+    image_type_id: u32,
+};
+
+pub const TypeStruct = struct {
+    member_ids: []u32,
+};
+
+pub const TypePointer = struct {
+    result_id: u32,
+    storage_class: StorageClass,
+    type_id: u32,
+};
+
+pub const TypeFunction = struct {
+    return_type_id: u32,
+    parameter_ids: []u32,
+};
+
+pub const TypeArray = struct {
+    element_type_id: u32,
+    length: u32,
+};
+
+pub const Constant = struct {
+    result_type_id: u32,
+    result_id: u32,
+    value: []u32,
+};
+
+pub const ConstantComposite = struct {
+    result_type_id: u32,
+    result_id: u32,
+    constituent_ids: []u32,
+};
+
+pub const SpecConstant = struct {
+    result_type_id: u32,
+    result_id: u32,
+    value: []u32,
+};
+
+pub const Function = struct {
+    result_type_id: u32,
+    result_id: u32,
+    fn_control: FunctionControl,
+    fn_type_id: u32,
+};
+
+pub const Variable = struct {
+    result_type_id: u32,
+    result_id: u32,
+    storage_class: StorageClass,
+    initializer_id: ?u32,
+};
+
+pub const Load = struct {
+    result_type_id: u32,
+    result_id: u32,
+    pointer_id: u32,
+    memory_operands: []u32,
+};
+
+pub const Store = struct {
+    pointer_id: u32,
+    object_id: u32,
+    memory_operands: []u32,
+};
+
+pub const AccessChain = struct {
+    result_type_id: u32,
+    result_id: u32,
+    base_id: u32,
+    index_ids: []u32,
+};
+
+pub const Decorate = struct {
+    target_id: u32,
+    decoration: Decoration,
+    operands: []u32,
+};
+
+pub const MemberDecorate = struct {
+    struct_type_id: u32,
+    id: u32,
+    decoration: Decoration,
+    operands: []u32,
+};
+
+pub const CompositeConstruct = struct {
+    result_type_id: u32,
+    result_id: u32,
+    constituent_ids: []u32,
+};
+
+pub const CompositeExtract = struct {
+    result_type_id: u32,
+    result_id: u32,
+    composite_id: u32,
+    index_ids: []u32,
+};
+
+pub const ImageSampleImplicitLod = struct {
+    result_type_id: u32,
+    result_id: u32,
+    sampled_image_id: u32,
+    coordinate_id: u32,
+    image_operands: []ImageOperands,
+};
+
+pub const FNegate = struct {
+    result_type_id: u32,
+    result_id: u32,
+    operand_id: u32,
+};
+
+pub const FAdd = struct {
+    result_type_id: u32,
+    result_id: u32,
+    operand1_id: u32,
+    operand2_id: u32,
+};
+
+pub const FMul = struct {
+    result_type_id: u32,
+    result_id: u32,
+    operand1_id: u32,
+    operand2_id: u32,
+};
+
+pub const MatrixTimesVector = struct {
+    result_type_id: u32,
+    result_id: u32,
+    matrix_id: u32,
+    vector_id: u32,
+};
+
+pub const MatrixTimesMatrix = struct {
+    result_type_id: u32,
+    result_id: u32,
+    left_matrix_id: u32,
+    right_matrix_id: u32,
+};
+
+pub const FWidth = struct {
+    result_type_id: u32,
+    result_id: u32,
+    p_id: u32,
+};
+
+pub const Label = struct {
+    result_id: u32,
+};
+
 pub const AddressingModel = enum(u32) {
     logical = 0,
     physical32 = 1,
@@ -28,11 +261,14 @@ pub const MemoryModelType = enum(u32) {
     openCL = 2,
 };
 
-pub const EntryPoint = struct {
-    execution_mode: ExecutionModeType,
-    id: u32,
-    name: []u8,
-    interface: []u32,
+pub const ExecutionModel = enum(u32) {
+    vertex = 0,
+    tessellation_control = 1,
+    tessellation_evaluation = 2,
+    geometry = 3,
+    fragment = 4,
+    gl_compute = 5,
+    kernel = 6,
 };
 
 pub const ExecutionModeType = enum(u32) {
@@ -71,13 +307,6 @@ pub const ExecutionModeType = enum(u32) {
     stencil_ref_replacing_ext = 5027,
 };
 
-pub const Source = struct {
-    language: SourceLanguage,
-    version: u32,
-    file_id: ?u32,
-    source: ?[]u8,
-};
-
 pub const SourceLanguage = enum(u32) {
     unknown = 0,
     essl = 1,
@@ -85,30 +314,6 @@ pub const SourceLanguage = enum(u32) {
     opencl_c = 3,
     opencl_cpp = 4,
     hlsl = 5,
-};
-
-pub const Name = struct {
-    target_id: u32,
-    name: []u8,
-};
-
-pub const MemberName = struct {
-    type_id: u32,
-    id: u32,
-    name: []u8,
-};
-
-pub const Decorate = struct {
-    target_id: u32,
-    decoration: Decoration,
-    operands: []u32,
-};
-
-pub const MemberDecorate = struct {
-    struct_type_id: u32,
-    id: u32,
-    decoration: Decoration,
-    operands: []u32,
 };
 
 pub const Decoration = enum(u32) {
@@ -164,41 +369,6 @@ pub const Decoration = enum(u32) {
     hlsl_semantic_google = 5635,
 };
 
-pub const TypeVoid = struct {
-    result_id: u32,
-};
-
-pub const TypeFunction = struct {
-    result_id: u32,
-    return_type_id: u32,
-    parameter_ids: []u32,
-};
-
-pub const TypeFloat = struct {
-    result_id: u32,
-    width: u32,
-    encoding: ?u32,
-};
-
-pub const TypeVector = struct {
-    result_id: u32,
-    component_type: u32,
-    component_count: u32,
-};
-
-pub const TypePointer = struct {
-    result_id: u32,
-    storage_class: StorageClass,
-    type_id: u32,
-};
-
-pub const Variable = struct {
-    result_type_id: u32,
-    result_id: u32,
-    storage_class: StorageClass,
-    initializer_id: ?u32,
-};
-
 pub const StorageClass = enum(u32) {
     uniform_constant = 0,
     input = 1,
@@ -215,39 +385,9 @@ pub const StorageClass = enum(u32) {
     storage_buffer = 12,
 };
 
-pub const TypeStruct = struct {
-    result_id: u32,
-    member_ids: []u32,
-};
-
-pub const TypeInt = struct {
-    result_id: u32,
-    width: u32,
-    signedness: Signedness,
-};
-
 pub const Signedness = enum(u32) {
     unsigned = 0,
     signed = 1,
-};
-
-pub const Constant = struct {
-    result_type_id: u32,
-    result_id: u32,
-    value: []u32,
-};
-
-pub const TypeMatrix = struct {
-    result_id: u32,
-    column_type_id: u32,
-    column_count: u32,
-};
-
-pub const Function = struct {
-    result_type_id: u32,
-    result_id: u32,
-    fn_control: FunctionControl,
-    fn_type_id: u32,
 };
 
 pub const FunctionControl = enum(u32) {
@@ -255,95 +395,6 @@ pub const FunctionControl = enum(u32) {
     dont_inline = 1,
     pure = 2,
     fn_const = 3,
-};
-
-pub const Label = struct {
-    result_id: u32,
-};
-
-pub const Load = struct {
-    result_type_id: u32,
-    result_id: u32,
-    pointer_id: u32,
-    memory_operands: []u32,
-};
-
-pub const FNegate = struct {
-    result_type_id: u32,
-    result_id: u32,
-    operand_id: u32,
-};
-
-pub const FAdd = struct {
-    result_type_id: u32,
-    result_id: u32,
-    operand1_id: u32,
-    operand2_id: u32,
-};
-
-pub const FMul = struct {
-    result_type_id: u32,
-    result_id: u32,
-    operand1_id: u32,
-    operand2_id: u32,
-};
-
-pub const Store = struct {
-    pointer_id: u32,
-    object_id: u32,
-    memory_operands: []u32,
-};
-
-pub const AccessChain = struct {
-    result_type_id: u32,
-    result_id: u32,
-    base_id: u32,
-    index_ids: []u32,
-};
-
-pub const MatrixTimesMatrix = struct {
-    result_type_id: u32,
-    result_id: u32,
-    left_matrix_id: u32,
-    right_matrix_id: u32,
-};
-
-pub const MatrixTimesVector = struct {
-    result_type_id: u32,
-    result_id: u32,
-    matrix_id: u32,
-    vector_id: u32,
-};
-
-pub const CompositeExtract = struct {
-    result_type_id: u32,
-    result_id: u32,
-    composite_id: u32,
-    index_ids: []u32,
-};
-
-pub const CompositeConstruct = struct {
-    result_type_id: u32,
-    result_id: u32,
-    constituent_ids: []u32,
-};
-
-pub const ExecutionMode = struct {
-    entry_point_id: u32,
-    mode: ExecutionModeType,
-    operands: []u32,
-};
-
-pub const TypeImage = struct {
-    result_id: u32,
-    sampled_type_id: u32,
-    dim: Dim,
-    depth: Depth,
-    arrayed: Arrayed,
-    ms: Ms,
-    sampeld: Sampled,
-    format: ImageFormat,
-    access_qualifier: ?AccessQualifier,
 };
 
 pub const Dim = enum(u32) {
@@ -427,19 +478,6 @@ pub const AccessQualifier = enum(u32) {
     read_write = 2,
 };
 
-pub const TypeSampledImage = struct {
-    result_id: u32,
-    image_type_id: u32,
-};
-
-pub const ImageSampleImplicitLod = struct {
-    result_type_id: u32,
-    result_id: u32,
-    sampled_image_id: u32,
-    coordinate_id: u32,
-    image_operands: []ImageOperands,
-};
-
 pub const ImageOperands = enum(u32) {
     bias = 0,
     lod = 1,
@@ -449,12 +487,6 @@ pub const ImageOperands = enum(u32) {
     const_offsets = 5,
     sample = 6,
     min_lod = 7,
-};
-
-pub const FWidth = struct {
-    result_type_id: u32,
-    result_id: u32,
-    p_id: u32,
 };
 
 pub const Op = enum(u16) {
@@ -823,8 +855,8 @@ pub const Capability = enum(u32) {
     input_attachment = 40,
     sparse_residency = 41,
     min_lod = 42,
-    sampled1_d = 43,
-    image1_d = 44,
+    sampled1d = 43,
+    image1d = 44,
     sampled_cube_array = 45,
     sampled_buffer = 46,
     image_buffer = 47,
