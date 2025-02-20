@@ -43,6 +43,7 @@ pub const Instruction = union(enum(u16)) {
     name: spirv.Name = 5,
     member_name: spirv.MemberName = 6,
     ext_inst_import: spirv.ExtInstImport = 11,
+    ext_inst: spirv.ExtInst = 12,
     memory_model: spirv.MemoryModel = 14,
     entry_point: spirv.EntryPoint = 15,
     execution_mode: spirv.ExecutionMode = 16,
@@ -68,9 +69,13 @@ pub const Instruction = union(enum(u16)) {
     member_decorate: spirv.MemberDecorate = 72,
     composite_construct: spirv.CompositeConstruct = 80,
     composite_extract: spirv.CompositeExtract = 81,
+    image_sample_implicit_lod: spirv.ImageSampleImplicitLod = 87,
+    fnegate: spirv.FNegate = 127,
     fadd: spirv.FAdd = 129,
+    fmul: spirv.FMul = 133,
     matrix_times_vector: spirv.MatrixTimesVector = 145,
     matrix_times_matrix: spirv.MatrixTimesMatrix = 146,
+    fwidth: spirv.FWidth = 209,
     label: spirv.Label = 248,
     op_return: void = 253,
 
@@ -114,6 +119,11 @@ pub const Instruction = union(enum(u16)) {
                 var s = try mem.packedRead(spirv.ExtInstImport, &r, "name");
                 s.name = try readString(allocator, &r);
                 return .{ .ext_inst_import = s };
+            },
+            .ext_inst => {
+                var s = try mem.packedRead(spirv.ExtInst, &r, "operands");
+                s.operands = try readToEnd(u32, allocator, &r);
+                return .{ .ext_inst = s };
             },
             .memory_model => .{ .memory_model = try mem.packedRead(spirv.MemoryModel, &r, null) },
             .entry_point => {
@@ -184,11 +194,13 @@ pub const Instruction = union(enum(u16)) {
                 return .{ .access_chain = s };
             },
             .decorate => {
-                const s = try mem.packedRead(spirv.Decorate, &r, null);
+                var s = try mem.packedRead(spirv.Decorate, &r, "operands");
+                s.operands = readToEnd(u32, allocator, &r) catch &[0]u32{};
                 return .{ .decorate = s };
             },
             .member_decorate => {
-                const s = try mem.packedRead(spirv.MemberDecorate, &r, null);
+                var s = try mem.packedRead(spirv.MemberDecorate, &r, "operands");
+                s.operands = readToEnd(u32, allocator, &r) catch &[0]u32{};
                 return .{ .member_decorate = s };
             },
             .composite_construct => {
@@ -201,9 +213,17 @@ pub const Instruction = union(enum(u16)) {
                 s.index_ids = try readToEnd(u32, allocator, &r);
                 return .{ .composite_extract = s };
             },
+            .image_sample_implicit_lod => {
+                var s = try mem.packedRead(spirv.ImageSampleImplicitLod, &r, "image_operands");
+                s.image_operands = readToEnd(spirv.ImageOperands, allocator, &r) catch &[0]spirv.ImageOperands{};
+                return .{ .image_sample_implicit_lod = s };
+            },
+            .fnegate => return .{ .fnegate = try mem.packedRead(spirv.FNegate, &r, null) },
             .fadd => return .{ .fadd = try mem.packedRead(spirv.FAdd, &r, null) },
+            .fmul => return .{ .fmul = try mem.packedRead(spirv.FMul, &r, null) },
             .matrix_times_vector => return .{ .matrix_times_vector = try mem.packedRead(spirv.MatrixTimesVector, &r, null) },
             .matrix_times_matrix => return .{ .matrix_times_matrix = try mem.packedRead(spirv.MatrixTimesMatrix, &r, null) },
+            .fwidth => return .{ .fwidth = try mem.packedRead(spirv.FWidth, &r, null) },
             .label => return .{ .label = try mem.packedRead(spirv.Label, &r, null) },
             .op_return => return .op_return,
             else => null,
@@ -226,13 +246,13 @@ pub fn readString(allocator: Allocator, r: *BufStream) ![]u8 {
 }
 
 pub fn readToEnd(T: type, allocator: Allocator, r: *BufStream) ![]T {
-    const len = r.readUntilDelimeter(null, 0);
+    const len = r.remainingBytes();
 
     if (len == 0) {
         return &[0]T{};
     }
 
-    const dest = try allocator.alloc(T, r.readToEnd(null) / @sizeOf(T));
+    const dest = try allocator.alloc(T, len / @sizeOf(T));
     _ = r.readToEnd(std.mem.sliceAsBytes(dest));
 
     return dest;

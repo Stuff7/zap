@@ -3,6 +3,14 @@ pub const ExtInstImport = struct {
     name: []u8,
 };
 
+pub const ExtInst = struct {
+    result_type_id: u32,
+    result_id: u32,
+    set_id: u32,
+    instruction: u32,
+    operands: []u32,
+};
+
 pub const MemoryModel = struct {
     addressing_model: AddressingModel,
     typ: MemoryModelType,
@@ -93,14 +101,14 @@ pub const MemberName = struct {
 pub const Decorate = struct {
     target_id: u32,
     decoration: Decoration,
-    // TODO: Extra operands
+    operands: []u32,
 };
 
 pub const MemberDecorate = struct {
     struct_type_id: u32,
     id: u32,
     decoration: Decoration,
-    // TODO: Extra operands
+    operands: []u32,
 };
 
 pub const Decoration = enum(u32) {
@@ -260,7 +268,20 @@ pub const Load = struct {
     memory_operands: []u32,
 };
 
+pub const FNegate = struct {
+    result_type_id: u32,
+    result_id: u32,
+    operand_id: u32,
+};
+
 pub const FAdd = struct {
+    result_type_id: u32,
+    result_id: u32,
+    operand1_id: u32,
+    operand2_id: u32,
+};
+
+pub const FMul = struct {
     result_type_id: u32,
     result_id: u32,
     operand1_id: u32,
@@ -310,7 +331,7 @@ pub const CompositeConstruct = struct {
 pub const ExecutionMode = struct {
     entry_point_id: u32,
     mode: ExecutionModeType,
-    operands: []u32, // TODO: https://registry.khronos.org/SPIR-V/specs/unified1/SPIRV.html#Execution_Mode
+    operands: []u32,
 };
 
 pub const TypeImage = struct {
@@ -409,6 +430,31 @@ pub const AccessQualifier = enum(u32) {
 pub const TypeSampledImage = struct {
     result_id: u32,
     image_type_id: u32,
+};
+
+pub const ImageSampleImplicitLod = struct {
+    result_type_id: u32,
+    result_id: u32,
+    sampled_image_id: u32,
+    coordinate_id: u32,
+    image_operands: []ImageOperands,
+};
+
+pub const ImageOperands = enum(u32) {
+    bias = 0,
+    lod = 1,
+    grad = 2,
+    const_offset = 3,
+    offset = 4,
+    const_offsets = 5,
+    sample = 6,
+    min_lod = 7,
+};
+
+pub const FWidth = struct {
+    result_type_id: u32,
+    result_id: u32,
+    p_id: u32,
 };
 
 pub const Op = enum(u16) {
