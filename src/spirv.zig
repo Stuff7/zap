@@ -36,6 +36,10 @@ pub fn read(allocator: Allocator, reader: anytype) !SpirV {
     return self;
 }
 
+pub fn nextInstruction(self: *SpirV) !?Instruction {
+    return Instruction.read(self.arena.allocator(), &self.reader);
+}
+
 pub fn deinit(self: SpirV) void {
     self.arena.deinit();
 }
@@ -135,37 +139,37 @@ pub const Instruction = union(enum(u16)) {
             .capability => .{ .capability = std.mem.bytesToValue(SpirV.Capability, words) },
             .type_void => .{ .type = .{ .result_id = try r.readAsEndian(u32, .little), .info = .void } },
             .type_bool => .{ .type = .{ .result_id = try r.readAsEndian(u32, .little), .info = .bool } },
-            .type_int => .{ .type = .{ .result_id = try r.readAsEndian(u32, .little), .info = .{ .int = try mem.packedRead(SpirV.TypeInt, &r, null) } } },
-            .type_vector => .{ .type = .{ .result_id = try r.readAsEndian(u32, .little), .info = .{ .vector = try mem.packedRead(SpirV.TypeVector, &r, null) } } },
-            .type_matrix => .{ .type = .{ .result_id = try r.readAsEndian(u32, .little), .info = .{ .matrix = try mem.packedRead(SpirV.TypeMatrix, &r, null) } } },
+            .type_int => .{ .type = .{ .result_id = try r.readAsEndian(u32, .little), .info = .{ .int = try mem.packedRead(SpirV.Type.Int, &r, null) } } },
+            .type_vector => .{ .type = .{ .result_id = try r.readAsEndian(u32, .little), .info = .{ .vector = try mem.packedRead(SpirV.Type.Vector, &r, null) } } },
+            .type_matrix => .{ .type = .{ .result_id = try r.readAsEndian(u32, .little), .info = .{ .matrix = try mem.packedRead(SpirV.Type.Matrix, &r, null) } } },
             .type_sampled_image => .{
-                .type = .{ .result_id = try r.readAsEndian(u32, .little), .info = .{ .sampled_image = try mem.packedRead(SpirV.TypeSampledImage, &r, null) } },
+                .type = .{ .result_id = try r.readAsEndian(u32, .little), .info = .{ .sampled_image = try mem.packedRead(SpirV.Type.SampledImage, &r, null) } },
             },
-            .type_array => .{ .type = .{ .result_id = try r.readAsEndian(u32, .little), .info = .{ .array = try mem.packedRead(SpirV.TypeArray, &r, null) } } },
+            .type_array => .{ .type = .{ .result_id = try r.readAsEndian(u32, .little), .info = .{ .array = try mem.packedRead(SpirV.Type.Array, &r, null) } } },
             .type_float, .type_image, .type_struct, .type_function => {
                 var t: SpirV.Type = undefined;
                 t.result_id = try r.readAsEndian(u32, .little);
 
                 t.info = ret: switch (code) {
                     .type_float => {
-                        var s = try mem.packedRead(SpirV.TypeFloat, &r, "encoding");
+                        var s = try mem.packedRead(SpirV.Type.Float, &r, "encoding");
                         s.encoding = r.readAsEndian(u32, .little) catch null;
                         break :ret .{ .float = s };
                     },
                     .type_image => {
-                        var s = try mem.packedRead(SpirV.TypeImage, &r, "access_qualifier");
+                        var s = try mem.packedRead(SpirV.Type.Image, &r, "access_qualifier");
                         _ = r.read(std.mem.asBytes(&s.access_qualifier)) catch {
                             s.access_qualifier = null;
                         };
                         break :ret .{ .image = s };
                     },
                     .type_struct => {
-                        var s = try mem.packedRead(SpirV.TypeStruct, &r, "member_ids");
+                        var s = try mem.packedRead(SpirV.Type.Struct, &r, "member_ids");
                         s.member_ids = try readToEnd(u32, allocator, &r);
                         break :ret .{ .@"struct" = s };
                     },
                     .type_function => {
-                        var s = try mem.packedRead(SpirV.TypeFunction, &r, "parameter_ids");
+                        var s = try mem.packedRead(SpirV.Type.Function, &r, "parameter_ids");
                         s.parameter_ids = try readToEnd(u32, allocator, &r);
                         break :ret .{ .function = s };
                     },

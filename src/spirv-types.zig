@@ -49,74 +49,76 @@ pub const ExecutionMode = struct {
 
 pub const Type = struct {
     result_id: u32,
-    info: union(enum) {
+    info: Info,
+
+    pub const Info = union(enum) {
         void,
         bool,
-        int: TypeInt,
-        float: TypeFloat,
-        vector: TypeVector,
-        matrix: TypeMatrix,
-        image: TypeImage,
-        sampled_image: TypeSampledImage,
-        array: TypeArray,
-        @"struct": TypeStruct,
-        function: TypeFunction,
-    },
-};
+        int: Int,
+        float: Float,
+        vector: Vector,
+        matrix: Matrix,
+        image: Image,
+        sampled_image: SampledImage,
+        array: Array,
+        @"struct": Struct,
+        function: Type.Function,
+    };
 
-pub const TypeInt = struct {
-    width: u32,
-    signedness: Signedness,
-};
+    pub const Int = struct {
+        width: u32,
+        signedness: Signedness,
+    };
 
-pub const TypeFloat = struct {
-    width: u32,
-    encoding: ?u32,
-};
+    pub const Float = struct {
+        width: u32,
+        encoding: ?u32,
+    };
 
-pub const TypeVector = struct {
-    component_type: u32,
-    component_count: u32,
-};
+    pub const Vector = struct {
+        component_type: u32,
+        component_count: u32,
+    };
 
-pub const TypeMatrix = struct {
-    column_type_id: u32,
-    column_count: u32,
-};
+    pub const Matrix = struct {
+        column_type_id: u32,
+        column_count: u32,
+    };
 
-pub const TypeImage = struct {
-    sampled_type_id: u32,
-    dim: Dim,
-    depth: Depth,
-    arrayed: Arrayed,
-    ms: Ms,
-    sampeld: Sampled,
-    format: ImageFormat,
-    access_qualifier: ?AccessQualifier,
-};
+    pub const Image = struct {
+        sampled_type_id: u32,
+        dim: Dim,
+        depth: Depth,
+        arrayed: Arrayed,
+        ms: Ms,
+        sampeld: Sampled,
+        format: ImageFormat,
+        access_qualifier: ?AccessQualifier,
+    };
 
-pub const TypeSampledImage = struct {
-    image_type_id: u32,
-};
+    pub const SampledImage = struct {
+        image_type_id: u32,
+    };
 
-pub const TypeStruct = struct {
-    member_ids: []u32,
+    pub const Struct = struct {
+        member_ids: []u32,
+    };
+
+    pub const Function = struct {
+        return_type_id: u32,
+        parameter_ids: []u32,
+    };
+
+    pub const Array = struct {
+        element_type_id: u32,
+        length: u32,
+    };
 };
 
 pub const TypePointer = struct {
     result_id: u32,
     storage_class: StorageClass,
     type_id: u32,
-};
-
-pub const TypeFunction = struct {
-    return_type_id: u32,
-    parameter_ids: []u32,
-};
-
-pub const TypeArray = struct {
-    element_type_id: u32,
-    length: u32,
 };
 
 pub const Constant = struct {
@@ -179,7 +181,7 @@ pub const Decorate = struct {
 
 pub const MemberDecorate = struct {
     struct_type_id: u32,
-    id: u32,
+    member_idx: u32,
     decoration: Decoration,
     operands: []u32,
 };
