@@ -12,7 +12,7 @@ pub const Name = struct {
 
 pub const MemberName = struct {
     type_id: u32,
-    id: u32,
+    idx: u32,
     name: []u8,
 };
 

@@ -70,7 +70,16 @@ pub fn main() !void {
         try bmp.write(file.writer(), null, null);
     } else if (std.mem.eql(u8, args[1], "spirv")) {
         if (args.len < 3) {
-            zut.dbg.usage(args[1], .{ "<file>", "Spir-V file path" });
+            // zig fmt: off
+            zut.dbg.usage(args[1], .{
+                "<file> [query] [options]", "SPIR-V file path + optional query",
+                "--------QUERIES---------", "",
+                "name <text>             ", "Find SPIR-V instruction id by it's variable or type name",
+                "type <id>               ", "Find SPIR-V type by it's id",
+                "type-ptr <id>           ", "Find SPIR-V type pointer by it's id",
+                "member <id|text>        ", "Find SPIR-V member info by it's id or member name",
+            });
+            // zig fmt: on
             return;
         }
 
@@ -80,10 +89,70 @@ pub fn main() !void {
         var spirv = try zap.SpirV.read(allocator, file.reader());
         defer spirv.deinit();
 
-        zut.dbg.dump(spirv);
+        if (args.len < 4) {
+            zut.dbg.dump(spirv);
+
+            while (try spirv.nextInstruction()) |inst| {
+                zut.dbg.dump(inst);
+            }
+
+            return;
+        }
+
+        var instruction_list = std.ArrayList(zap.SpirV.Instruction).init(allocator);
 
         while (try spirv.nextInstruction()) |inst| {
-            zut.dbg.dump(inst);
+            try instruction_list.append(inst);
+        }
+
+        const instructions = try instruction_list.toOwnedSlice();
+        defer allocator.free(instructions);
+
+        const query_param = if (args.len > 4) args[4] else null;
+
+        if (std.mem.eql(u8, args[3], "name")) {
+            for (instructions) |inst| {
+                if (inst == .name and (query_param == null or std.mem.eql(u8, inst.name.name, query_param.?))) {
+                    dbg.dump(inst.name);
+                }
+            }
+        } else if (std.mem.eql(u8, args[3], "var")) {
+            const id = if (query_param) |q| try std.fmt.parseInt(u32, q, 10) else null;
+
+            for (instructions) |inst| {
+                if (inst == .variable and (id == null or inst.variable.result_id == id)) {
+                    dbg.dump(inst.variable);
+                }
+            }
+        } else if (std.mem.eql(u8, args[3], "type")) {
+            const id = if (query_param) |q| try std.fmt.parseInt(u32, q, 10) else null;
+
+            for (instructions) |inst| {
+                if (inst == .type and (id == null or inst.type.result_id == id)) {
+                    dbg.dump(inst.type);
+                }
+            }
+        } else if (std.mem.eql(u8, args[3], "type-ptr")) {
+            const id = if (query_param) |q| try std.fmt.parseInt(u32, q, 10) else null;
+
+            for (instructions) |inst| {
+                if (inst == .type_pointer and (id == null or inst.type_pointer.result_id == id)) {
+                    dbg.dump(inst.type_pointer);
+                }
+            }
+        } else if (std.mem.eql(u8, args[3], "member")) {
+            const id = if (query_param) |q| std.fmt.parseInt(u32, q, 10) catch null else null;
+            const name = if (id == null) query_param else null;
+
+            for (instructions) |inst| {
+                if (name != null and inst == .member_name and std.mem.eql(u8, inst.member_name.name, name.?)) {
+                    dbg.dump(inst.member_name);
+                } else if (id != null and inst == .member_decorate and inst.member_decorate.struct_type_id == id) {
+                    dbg.dump(inst.member_decorate);
+                } else if (id == null and name == null and (inst == .member_name or inst == .member_decorate)) {
+                    dbg.dump(inst);
+                }
+            }
         }
     }
 }
