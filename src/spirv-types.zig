@@ -186,6 +186,14 @@ pub const MemberDecorate = struct {
     operands: []u32,
 };
 
+pub const VectorShuffle = struct {
+    result_type_id: u32,
+    result_id: u32,
+    vector1_id: u32,
+    vector2_id: u32,
+    components: []u32,
+};
+
 pub const CompositeConstruct = struct {
     result_type_id: u32,
     result_id: u32,
@@ -225,6 +233,13 @@ pub const FMul = struct {
     result_id: u32,
     operand1_id: u32,
     operand2_id: u32,
+};
+
+pub const VectorTimesScalar = struct {
+    result_type_id: u32,
+    result_id: u32,
+    vector_id: u32,
+    scalar_id: u32,
 };
 
 pub const MatrixTimesVector = struct {

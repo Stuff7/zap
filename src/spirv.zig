@@ -67,12 +67,14 @@ pub const Instruction = union(enum(u16)) {
     access_chain: SpirV.AccessChain = 65,
     decorate: SpirV.Decorate = 71,
     member_decorate: SpirV.MemberDecorate = 72,
+    vector_shuffle: SpirV.VectorShuffle = 79,
     composite_construct: SpirV.CompositeConstruct = 80,
     composite_extract: SpirV.CompositeExtract = 81,
     image_sample_implicit_lod: SpirV.ImageSampleImplicitLod = 87,
     fnegate: SpirV.FNegate = 127,
     fadd: SpirV.FAdd = 129,
     fmul: SpirV.FMul = 133,
+    vector_times_scalar: SpirV.VectorTimesScalar = 142,
     matrix_times_vector: SpirV.MatrixTimesVector = 145,
     matrix_times_matrix: SpirV.MatrixTimesMatrix = 146,
     fwidth: SpirV.FWidth = 209,
@@ -226,6 +228,11 @@ pub const Instruction = union(enum(u16)) {
                 s.operands = readToEnd(u32, allocator, &r) catch &[0]u32{};
                 return .{ .member_decorate = s };
             },
+            .vector_shuffle => {
+                var s = try mem.packedRead(SpirV.VectorShuffle, &r, "components");
+                s.components = readToEnd(u32, allocator, &r) catch &[0]u32{};
+                return .{ .vector_shuffle = s };
+            },
             .composite_construct => {
                 var s = try mem.packedRead(SpirV.CompositeConstruct, &r, "constituent_ids");
                 s.constituent_ids = try readToEnd(u32, allocator, &r);
@@ -244,6 +251,7 @@ pub const Instruction = union(enum(u16)) {
             .fnegate => .{ .fnegate = try mem.packedRead(SpirV.FNegate, &r, null) },
             .fadd => .{ .fadd = try mem.packedRead(SpirV.FAdd, &r, null) },
             .fmul => .{ .fmul = try mem.packedRead(SpirV.FMul, &r, null) },
+            .vector_times_scalar => .{ .vector_times_scalar = try mem.packedRead(SpirV.VectorTimesScalar, &r, null) },
             .matrix_times_vector => .{ .matrix_times_vector = try mem.packedRead(SpirV.MatrixTimesVector, &r, null) },
             .matrix_times_matrix => .{ .matrix_times_matrix = try mem.packedRead(SpirV.MatrixTimesMatrix, &r, null) },
             .fwidth => .{ .fwidth = try mem.packedRead(SpirV.FWidth, &r, null) },
