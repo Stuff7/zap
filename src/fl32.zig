@@ -27,7 +27,12 @@ pub const Fl32 = struct {
 
         var self = try zut.mem.packedRead(Fl32, &r, "data");
         self.data = try allocator.alloc(f32, self.width * self.height * self.num_channels);
-        _ = try r.read(std.mem.sliceAsBytes(self.data));
+
+        const bytes_read = try r.read(std.mem.sliceAsBytes(self.data));
+
+        if (bytes_read < self.data.len * @sizeOf(f32)) {
+            _ = try r.read(std.mem.sliceAsBytes(self.data)[bytes_read..]); // flush
+        }
 
         return self;
     }
@@ -36,5 +41,6 @@ pub const Fl32 = struct {
         var w = std.io.bufferedWriter(writer);
         _ = try w.write(header_id);
         try zut.mem.packedWrite(self, &w);
+        try w.flush();
     }
 };
