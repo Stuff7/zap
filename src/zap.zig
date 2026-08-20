@@ -1,6 +1,5 @@
 const std = @import("std");
 
-pub usingnamespace @import("bmp.zig");
-pub usingnamespace @import("fl32.zig");
-pub usingnamespace @import("bufstream.zig");
-pub usingnamespace @import("spirv.zig");
+pub const bmp = @import("bmp.zig");
+pub const Fl32 = @import("Fl32.zig");
+pub const SpirV = @import("SpirV.zig");

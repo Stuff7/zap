@@ -1,12 +1,13 @@
 .{
-    .name = "zap",
+    .name = .zap,
+    .fingerprint = 0x8ac41f4ecab2455b,
     .version = "0.1.0",
-    .paths = .{ "build.zig", "build.zig.zon", "src" },
-
+    .minimum_zig_version = "0.17.0-dev.248+95507faf1",
     .dependencies = .{
         .zut = .{
-            .url = "git+https://github.com/Stuff7/zut#41ac311d19b5a378a2b20f2da0329c3435f80e27",
-            .hash = "122014da42f226b002d68eda74c49c14c0cc96f4620ff69cbf0e5dff42b9d20a95f2",
+            .url = "git+https://github.com/Stuff7/zut.git#2ea05580eb8062a8fc88a1d4114901a3936243dd",
+            .hash = "zut-1.0.0-5cLvvlWZAAAoMh4A6IrrDDbMe7XxHfzxkAXaGTZ2g3AB",
         },
     },
+    .paths = .{ "build.zig", "build.zig.zon", "src" },
 }

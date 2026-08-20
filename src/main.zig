@@ -1,25 +1,19 @@
 const std = @import("std");
 const zap = @import("zap");
 const zut = @import("zut");
-
 const dbg = zut.dbg;
 
-pub fn main() !void {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}).init;
-    defer _ = gpa.deinit();
-    const allocator = gpa.allocator();
+pub fn main(proc: std.process.Init) !void {
+    const allocator = proc.gpa;
 
-    const args = try std.process.argsAlloc(allocator);
-    defer std.process.argsFree(allocator, args);
+    const args = try proc.minimal.args.toSlice(proc.arena.allocator());
 
     if (args.len < 2) {
-        // zig fmt: off
         zut.dbg.usage(args[0], .{
-            "fl32", "Test fl32 format",
-            "bmp" , "Write a test bmp file",
-            "spirv" , "Read a Spir-V file",
+            "fl32",  "Test fl32 format",
+            "bmp",   "Write a test bmp file",
+            "spirv", "Read a Spir-V file",
         });
-        // zig fmt: on
         return;
     }
 
@@ -29,8 +23,10 @@ pub fn main() !void {
             return;
         }
 
-        const file = try std.fs.cwd().openFile(args[2], .{});
-        defer file.close();
+        const file = try std.Io.Dir.cwd().openFile(proc.io, args[2], .{});
+        defer file.close(proc.io);
+        var wbuf: [256]u8 = undefined;
+        var writer = file.writer(proc.io, &wbuf);
 
         const fl32 = zap.Fl32{
             .width = 4,
@@ -38,9 +34,11 @@ pub fn main() !void {
             .data = @constCast(&[_]f32{ 1, 2, 3, 4, 5, 6, 7, 8 }),
         };
         zut.dbg.dump(fl32);
-        try fl32.write(file.writer());
+        try fl32.write(&writer.interface);
 
-        const fl32r = try zap.Fl32.read(allocator, file.reader());
+        var rbuf: [256]u8 = undefined;
+        var reader = file.reader(proc.io, &rbuf);
+        const fl32r = try zap.Fl32.read(allocator, &reader.interface);
         defer allocator.free(fl32r.data);
         zut.dbg.dump(fl32r);
     } else if (std.mem.eql(u8, args[1], "bmp")) {
@@ -51,8 +49,8 @@ pub fn main() !void {
 
         const width = 16;
         const height = 16;
-        var buffer = [_]u8{0} ** (width * height * zap.Bmp(16).bytes_per_px);
-        var bmp = try zap.Bmp(16).init(width, height, &buffer);
+        var buffer: [width * height * zap.bmp.Bmp(16).bytes_per_px]u8 = @splat(0);
+        var bmp = try zap.bmp.Bmp(16).init(width, height, &buffer);
         zut.dbg.dump(bmp);
 
         for (0..bmp.width - 4) |i| {
@@ -65,12 +63,13 @@ pub fn main() !void {
             bmp.pixels[(i + off_l) * bmp.width + off_r].g = 31;
         }
 
-        const file = try std.fs.cwd().createFile(args[2], .{});
-        defer file.close();
-        try bmp.write(file.writer(), null, null);
+        const file = try std.Io.Dir.cwd().createFile(proc.io, args[2], .{});
+        defer file.close(proc.io);
+        var wbuf: [256]u8 = undefined;
+        var writer = file.writer(proc.io, &wbuf);
+        try bmp.write(&writer.interface, null, null);
     } else if (std.mem.eql(u8, args[1], "spirv")) {
         if (args.len < 3) {
-            // zig fmt: off
             zut.dbg.usage(args[1], .{
                 "<file> [query] [options]", "SPIR-V file path + optional query",
                 "--------QUERIES---------", "",
@@ -79,14 +78,15 @@ pub fn main() !void {
                 "type-ptr <id>           ", "Find SPIR-V type pointer by it's id",
                 "member <id|text>        ", "Find SPIR-V member info by it's id or member name",
             });
-            // zig fmt: on
             return;
         }
 
-        const file = try std.fs.cwd().openFile(args[2], .{});
-        defer file.close();
+        const file = try std.Io.Dir.cwd().openFile(proc.io, args[2], .{});
+        defer file.close(proc.io);
 
-        var spirv = try zap.SpirV.read(allocator, file.reader());
+        var rbuf: [256]u8 = undefined;
+        var reader = file.reader(proc.io, &rbuf);
+        var spirv = try zap.SpirV.read(allocator, &reader.interface);
         defer spirv.deinit();
 
         if (args.len < 4) {
@@ -99,13 +99,13 @@ pub fn main() !void {
             return;
         }
 
-        var instruction_list = std.ArrayList(zap.SpirV.Instruction).init(allocator);
+        var instruction_list = std.ArrayList(zap.SpirV.Instruction).empty;
 
         while (try spirv.nextInstruction()) |inst| {
-            try instruction_list.append(inst);
+            try instruction_list.append(allocator, inst);
         }
 
-        const instructions = try instruction_list.toOwnedSlice();
+        const instructions = try instruction_list.toOwnedSlice(allocator);
         defer allocator.free(instructions);
 
         const query_param = if (args.len > 4) args[4] else null;

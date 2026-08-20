@@ -1,87 +1,52 @@
 const std = @import("std");
 
+const Module = std.Build.Module;
+const Import = Module.Import;
+
 pub fn build(b: *std.Build) !void {
-    var info = BuildInfo{
-        .kind = .exe,
-        .target = b.standardTargetOptions(.{}),
-        .bin_name = "zap",
-        .optimize = b.standardOptimizeOption(.{}),
-        .src_path = "src/main.zig",
-        .module = b.addModule("zap", .{ .root_source_file = b.path("src/zap.zig") }),
-        .dependencies = @constCast(&[_][]const u8{"zut"}),
-    };
-    const exe = addBuildOption(b, info, null);
-    b.installArtifact(exe);
+    const target = b.standardTargetOptions(.{});
+    const optimize = b.standardOptimizeOption(.{});
 
-    const check = addBuildOption(b, info, null);
-    const check_step = b.step("check", "Build for LSP Diagnostics");
-    check_step.dependOn(&check.step);
-
-    info.kind = .tests;
-    const tests = addBuildOption(b, info, .{ .name = "test", .desc = "Run tests" });
-    check_step.dependOn(&tests.step);
-}
-
-const BuildInfo = struct {
-    kind: enum { tests, exe },
-    target: std.Build.ResolvedTarget,
-    bin_name: []const u8,
-    src_path: []const u8,
-    optimize: std.builtin.OptimizeMode,
-    module: *std.Build.Module,
-    dependencies: [][]const u8,
-};
-
-const StepInfo = struct {
-    name: []const u8,
-    desc: []const u8,
-};
-
-fn addBuildOption(
-    b: *std.Build,
-    info: BuildInfo,
-    step: ?StepInfo,
-) *std.Build.Step.Compile {
-    var name_buf: [256]u8 = undefined;
-    const bin_postfix = switch (info.optimize) {
+    const bin_name = "zap";
+    const suffix = switch (optimize) {
         .Debug => "-dbg",
         .ReleaseFast => "",
         .ReleaseSafe => "-s",
         .ReleaseSmall => "-sm",
     };
 
-    const bin = switch (info.kind) {
-        .exe => b.addExecutable(.{
-            .name = std.fmt.bufPrint(@constCast(&name_buf), "{s}{s}", .{ info.bin_name, bin_postfix }) catch unreachable,
-            .root_source_file = b.path(info.src_path),
-            .target = info.target,
-            .optimize = info.optimize,
-        }),
-        .tests => b.addTest(.{
-            .root_source_file = b.path(info.src_path),
-            .target = info.target,
-            .optimize = info.optimize,
-        }),
-    };
+    const dep_zut = b.dependency("zut", .{ .target = target, .optimize = optimize });
 
-    for (info.dependencies) |name| {
-        const dep = b.dependency(name, .{ .target = info.target, .optimize = info.optimize });
-        bin.root_module.addImport(name, dep.module(name));
-        info.module.addImport(name, dep.module(name));
-    }
+    const zap = b.addModule("zap", .{
+        .root_source_file = b.path("src/zap.zig"),
+        .target = target,
+        .optimize = optimize,
+        .imports = &.{
+            .{ .name = "zut", .module = dep_zut.module("zut") },
+        },
+    });
+    const main_module = b.createModule(.{
+        .root_source_file = b.path("src/main.zig"),
+        .target = target,
+        .optimize = optimize,
+        .imports = &.{
+            .{ .name = "zut", .module = dep_zut.module("zut") },
+            .{ .name = "zap", .module = zap },
+        },
+    });
 
-    bin.root_module.addImport("zap", info.module);
+    const exe = b.addExecutable(.{
+        .name = b.fmt("{s}{s}", .{ bin_name, suffix }),
+        .root_module = main_module,
+    });
+    b.installArtifact(exe);
 
-    if (step) |s| {
-        const install_step = b.step(s.name, s.desc);
-        switch (info.kind) {
-            .exe => install_step.dependOn(&b.addInstallArtifact(bin, .{}).step),
-            .tests => {
-                const exe_tests = b.addRunArtifact(bin);
-                install_step.dependOn(&exe_tests.step);
-            },
-        }
-    }
+    const tests = b.addTest(.{ .name = bin_name, .root_module = main_module });
+    const run_tests = b.addRunArtifact(tests);
+    b.step("test", "Run tests").dependOn(&run_tests.step);
 
-    return bin;
+    const check = b.addExecutable(.{ .name = "check", .root_module = main_module });
+    const check_step = b.step("check", "Build for LSP");
+    check_step.dependOn(&check.step);
+    check_step.dependOn(&run_tests.step);
 }
