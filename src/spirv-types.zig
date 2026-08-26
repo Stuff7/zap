@@ -5,6 +5,10 @@ pub const Source = struct {
     source: ?[]u8,
 };
 
+pub const SourceExtension = struct {
+    extension: []u8,
+};
+
 pub const Name = struct {
     target_id: u32,
     name: []u8,
@@ -47,6 +51,64 @@ pub const ExecutionMode = struct {
     operands: []u32,
 };
 
+pub const ShiftRightLogical = struct {
+    result_type_id: u32,
+    result_id: u32,
+    base_id: u32,
+    shift_id: u32,
+};
+
+pub const BitwiseAnd = struct {
+    result_type_id: u32,
+    result_id: u32,
+    operand1_id: u32,
+    operand2_id: u32,
+};
+
+pub const FOrdGreaterThan = struct {
+    result_type_id: u32,
+    result_id: u32,
+    operand1_id: u32,
+    operand2_id: u32,
+};
+
+pub const ConvertUToF = struct {
+    result_type_id: u32,
+    result_id: u32,
+    unsigned_value_id: u32,
+};
+
+pub const SelectionMerge = struct {
+    merge_block_id: u32,
+    selection_control: u32,
+};
+
+pub const BranchConditional = struct {
+    condition_id: u32,
+    true_label_id: u32,
+    false_label_id: u32,
+    branch_weights: []u32,
+};
+
+pub const FunctionCall = struct {
+    result_type_id: u32,
+    result_id: u32,
+    function_id: u32,
+    argument_ids: []u32,
+};
+
+pub const FunctionParameter = struct {
+    result_type_id: u32,
+    result_id: u32,
+};
+
+pub const SampledImageCombine = struct {
+    result_type_id: u32,
+    result_id: u32,
+    image_id: u32,
+    sampler_id: u32,
+};
+
 pub const Type = struct {
     result_id: u32,
     info: Info,
@@ -54,6 +116,7 @@ pub const Type = struct {
     pub const Info = union(enum) {
         void,
         bool,
+        sampler,
         int: Int,
         float: Float,
         vector: Vector,
@@ -913,4 +976,164 @@ pub const Capability = enum(u32) {
     subgroup_shuffle_intel = 5568,
     subgroup_buffer_block_iointel = 5569,
     subgroup_image_block_iointel = 5570,
+};
+pub const ReturnValue = struct {
+    value_id: u32,
+};
+
+pub const Branch = struct {
+    target_label_id: u32,
+};
+
+pub const FSub = struct {
+    result_type_id: u32,
+    result_id: u32,
+    operand1_id: u32,
+    operand2_id: u32,
+};
+
+pub const FDiv = struct {
+    result_type_id: u32,
+    result_id: u32,
+    operand1_id: u32,
+    operand2_id: u32,
+};
+
+pub const IMul = struct {
+    result_type_id: u32,
+    result_id: u32,
+    operand1_id: u32,
+    operand2_id: u32,
+};
+
+pub const IAdd = struct {
+    result_type_id: u32,
+    result_id: u32,
+    operand1_id: u32,
+    operand2_id: u32,
+};
+
+pub const UMod = struct {
+    result_type_id: u32,
+    result_id: u32,
+    operand1_id: u32,
+    operand2_id: u32,
+};
+
+pub const Dot = struct {
+    result_type_id: u32,
+    result_id: u32,
+    vector1_id: u32,
+    vector2_id: u32,
+};
+
+pub const BitwiseXor = struct {
+    result_type_id: u32,
+    result_id: u32,
+    operand1_id: u32,
+    operand2_id: u32,
+};
+
+pub const BitwiseOr = struct {
+    result_type_id: u32,
+    result_id: u32,
+    operand1_id: u32,
+    operand2_id: u32,
+};
+
+pub const FOrdLessThan = struct {
+    result_type_id: u32,
+    result_id: u32,
+    operand1_id: u32,
+    operand2_id: u32,
+};
+
+pub const FOrdGreaterThanEqual = struct {
+    result_type_id: u32,
+    result_id: u32,
+    operand1_id: u32,
+    operand2_id: u32,
+};
+
+pub const FOrdLessThanEqual = struct {
+    result_type_id: u32,
+    result_id: u32,
+    operand1_id: u32,
+    operand2_id: u32,
+};
+
+pub const UGreaterThan = struct {
+    result_type_id: u32,
+    result_id: u32,
+    operand1_id: u32,
+    operand2_id: u32,
+};
+
+pub const Bitcast = struct {
+    result_type_id: u32,
+    result_id: u32,
+    operand_id: u32,
+};
+
+pub const ConvertSToF = struct {
+    result_type_id: u32,
+    result_id: u32,
+    signed_value_id: u32,
+};
+
+pub const ConvertFToS = struct {
+    result_type_id: u32,
+    result_id: u32,
+    float_value_id: u32,
+};
+
+pub const ConvertFToU = struct {
+    result_type_id: u32,
+    result_id: u32,
+    float_value_id: u32,
+};
+
+pub const ShiftLeftLogical = struct {
+    result_type_id: u32,
+    result_id: u32,
+    base_id: u32,
+    shift_id: u32,
+};
+
+pub const ShiftRightArithmetic = struct {
+    result_type_id: u32,
+    result_id: u32,
+    base_id: u32,
+    shift_id: u32,
+};
+
+pub const Select = struct {
+    result_type_id: u32,
+    result_id: u32,
+    condition_id: u32,
+    object1_id: u32,
+    object2_id: u32,
+};
+
+pub const ImageExtract = struct {
+    result_type_id: u32,
+    result_id: u32,
+    sampled_image_id: u32,
+};
+
+pub const ImageFetch = struct {
+    result_type_id: u32,
+    result_id: u32,
+    image_id: u32,
+    coordinate_id: u32,
+    image_operands: []ImageOperands,
+};
+
+pub const ImageSampleDrefImplicitLod = struct {
+    result_type_id: u32,
+    result_id: u32,
+    sampled_image_id: u32,
+    coordinate_id: u32,
+    dref_id: u32,
+    image_operands: []ImageOperands,
 };
