@@ -154,7 +154,7 @@ pub const Type = struct {
         depth: Depth,
         arrayed: Arrayed,
         ms: Ms,
-        sampeld: Sampled,
+        sampled: Sampled,
         format: ImageFormat,
         access_qualifier: ?AccessQualifier,
     };

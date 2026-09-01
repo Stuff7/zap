@@ -233,7 +233,7 @@ pub const Instruction = union(enum(u16)) {
                 const depth = try body.takeEnum(types.Depth, .little);
                 const arrayed = try body.takeEnum(types.Arrayed, .little);
                 const ms = try body.takeEnum(types.Ms, .little);
-                const sampeld = try body.takeEnum(types.Sampled, .little);
+                const sampled = try body.takeEnum(types.Sampled, .little);
                 const format = try body.takeEnum(types.ImageFormat, .little);
                 const access_qualifier = body.takeEnum(types.AccessQualifier, .little) catch null;
                 return .{ .type = .{ .result_id = result_id, .info = .{ .image = .{
@@ -242,7 +242,7 @@ pub const Instruction = union(enum(u16)) {
                     .depth = depth,
                     .arrayed = arrayed,
                     .ms = ms,
-                    .sampeld = sampeld,
+                    .sampled = sampled,
                     .format = format,
                     .access_qualifier = access_qualifier,
                 } } } };
