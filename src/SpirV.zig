@@ -118,6 +118,17 @@ pub const Instruction = union(enum(u16)) {
     image: types.ImageExtract = 100,
     image_fetch: types.ImageFetch = 95,
     image_sample_dref_implicit_lod: types.ImageSampleDrefImplicitLod = 89,
+    ugreater_than_equal: types.UGreaterThanEqual = 174,
+    udiv: types.UDiv = 134,
+    loop_merge: types.LoopMerge = 246,
+    uless_than: types.ULessThan = 176,
+    not: types.Not = 200,
+    inot_equal: types.INotEqual = 171,
+    iequal: types.IEqual = 170,
+    isub: types.ISub = 130,
+    op_unreachable: void = 255,
+    uconvert: types.UConvert = 113,
+    logical_not: types.LogicalNot = 168,
 
     pub fn read(allocator: Allocator, r: *std.Io.Reader) !?Instruction {
         const first_word = r.takeInt(u32, .little) catch |err| switch (err) {
@@ -219,6 +230,11 @@ pub const Instruction = union(enum(u16)) {
                 const element_type_id = try body.takeInt(u32, .little);
                 const length = try body.takeInt(u32, .little);
                 return .{ .type = .{ .result_id = result_id, .info = .{ .array = .{ .element_type_id = element_type_id, .length = length } } } };
+            },
+            .type_runtime_array => {
+                const result_id = try body.takeInt(u32, .little);
+                const element_type_id = try body.takeInt(u32, .little);
+                return .{ .type = .{ .result_id = result_id, .info = .{ .runtime_array = .{ .element_type_id = element_type_id } } } };
             },
             .type_float => {
                 const result_id = try body.takeInt(u32, .little);
@@ -587,6 +603,63 @@ pub const Instruction = union(enum(u16)) {
                 .coordinate_id = try body.takeInt(u32, .little),
                 .dref_id = try body.takeInt(u32, .little),
                 .image_operands = readImageOperands(allocator, &body) catch &[0]types.ImageOperands{},
+            } },
+            .ugreater_than_equal => .{ .ugreater_than_equal = .{
+                .result_type_id = try body.takeInt(u32, .little),
+                .result_id = try body.takeInt(u32, .little),
+                .operand1_id = try body.takeInt(u32, .little),
+                .operand2_id = try body.takeInt(u32, .little),
+            } },
+            .udiv => .{ .udiv = .{
+                .result_type_id = try body.takeInt(u32, .little),
+                .result_id = try body.takeInt(u32, .little),
+                .operand1_id = try body.takeInt(u32, .little),
+                .operand2_id = try body.takeInt(u32, .little),
+            } },
+            .loop_merge => .{ .loop_merge = .{
+                .merge_block_id = try body.takeInt(u32, .little),
+                .continue_target_id = try body.takeInt(u32, .little),
+                .loop_control = try body.takeInt(u32, .little),
+            } },
+            .uless_than => .{ .uless_than = .{
+                .result_type_id = try body.takeInt(u32, .little),
+                .result_id = try body.takeInt(u32, .little),
+                .operand1_id = try body.takeInt(u32, .little),
+                .operand2_id = try body.takeInt(u32, .little),
+            } },
+            .not => .{ .not = .{
+                .result_type_id = try body.takeInt(u32, .little),
+                .result_id = try body.takeInt(u32, .little),
+                .operand_id = try body.takeInt(u32, .little),
+            } },
+            .inot_equal => .{ .inot_equal = .{
+                .result_type_id = try body.takeInt(u32, .little),
+                .result_id = try body.takeInt(u32, .little),
+                .operand1_id = try body.takeInt(u32, .little),
+                .operand2_id = try body.takeInt(u32, .little),
+            } },
+            .iequal => .{ .iequal = .{
+                .result_type_id = try body.takeInt(u32, .little),
+                .result_id = try body.takeInt(u32, .little),
+                .operand1_id = try body.takeInt(u32, .little),
+                .operand2_id = try body.takeInt(u32, .little),
+            } },
+            .isub => .{ .isub = .{
+                .result_type_id = try body.takeInt(u32, .little),
+                .result_id = try body.takeInt(u32, .little),
+                .operand1_id = try body.takeInt(u32, .little),
+                .operand2_id = try body.takeInt(u32, .little),
+            } },
+            .op_unreachable => .op_unreachable,
+            .uconvert => .{ .uconvert = .{
+                .result_type_id = try body.takeInt(u32, .little),
+                .result_id = try body.takeInt(u32, .little),
+                .unsigned_value_id = try body.takeInt(u32, .little),
+            } },
+            .logical_not => .{ .logical_not = .{
+                .result_type_id = try body.takeInt(u32, .little),
+                .result_id = try body.takeInt(u32, .little),
+                .operand_id = try body.takeInt(u32, .little),
             } },
             else => {
                 std.log.warn("unhandled SPIR-V opcode: {s} ({d})", .{ @tagName(code), @intFromEnum(code) });

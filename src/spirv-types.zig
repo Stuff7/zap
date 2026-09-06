@@ -83,6 +83,12 @@ pub const SelectionMerge = struct {
     selection_control: u32,
 };
 
+pub const LoopMerge = struct {
+    merge_block_id: u32,
+    continue_target_id: u32,
+    loop_control: u32,
+};
+
 pub const BranchConditional = struct {
     condition_id: u32,
     true_label_id: u32,
@@ -124,6 +130,7 @@ pub const Type = struct {
         image: Image,
         sampled_image: SampledImage,
         array: Array,
+        runtime_array: RuntimeArray,
         @"struct": Struct,
         function: Type.Function,
     };
@@ -175,6 +182,10 @@ pub const Type = struct {
     pub const Array = struct {
         element_type_id: u32,
         length: u32,
+    };
+
+    pub const RuntimeArray = struct {
+        element_type_id: u32,
     };
 };
 
@@ -1067,6 +1078,66 @@ pub const UGreaterThan = struct {
     result_id: u32,
     operand1_id: u32,
     operand2_id: u32,
+};
+
+pub const UGreaterThanEqual = struct {
+    result_type_id: u32,
+    result_id: u32,
+    operand1_id: u32,
+    operand2_id: u32,
+};
+
+pub const UDiv = struct {
+    result_type_id: u32,
+    result_id: u32,
+    operand1_id: u32,
+    operand2_id: u32,
+};
+
+pub const ULessThan = struct {
+    result_type_id: u32,
+    result_id: u32,
+    operand1_id: u32,
+    operand2_id: u32,
+};
+
+pub const Not = struct {
+    result_type_id: u32,
+    result_id: u32,
+    operand_id: u32,
+};
+
+pub const INotEqual = struct {
+    result_type_id: u32,
+    result_id: u32,
+    operand1_id: u32,
+    operand2_id: u32,
+};
+
+pub const IEqual = struct {
+    result_type_id: u32,
+    result_id: u32,
+    operand1_id: u32,
+    operand2_id: u32,
+};
+
+pub const ISub = struct {
+    result_type_id: u32,
+    result_id: u32,
+    operand1_id: u32,
+    operand2_id: u32,
+};
+
+pub const UConvert = struct {
+    result_type_id: u32,
+    result_id: u32,
+    unsigned_value_id: u32,
+};
+
+pub const LogicalNot = struct {
+    result_type_id: u32,
+    result_id: u32,
+    operand_id: u32,
 };
 
 pub const Bitcast = struct {
