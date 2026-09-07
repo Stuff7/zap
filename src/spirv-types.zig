@@ -974,10 +974,13 @@ pub const Capability = enum(u32) {
     variable_pointers = 4442,
     atomic_storage_ops = 4445,
     sample_mask_post_depth_coverage = 4447,
+    storage_buffer_8bit_access = 4448,
+    float16_image_amd = 5008,
     image_gather_bias_lod_amd = 5009,
     fragment_mask_amd = 5010,
     stencil_export_ext = 5013,
     image_read_write_lod_amd = 5015,
+    shader_clock_khr = 5055,
     sample_mask_override_coverage_nv = 5249,
     geometry_shader_passthrough_nv = 5251,
     shader_viewport_index_layer_ext = 5254,
@@ -987,7 +990,10 @@ pub const Capability = enum(u32) {
     subgroup_shuffle_intel = 5568,
     subgroup_buffer_block_iointel = 5569,
     subgroup_image_block_iointel = 5570,
+    bit_instructions = 6025,
+    unknown = 65535,
 };
+
 pub const ReturnValue = struct {
     value_id: u32,
 };

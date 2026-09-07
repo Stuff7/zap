@@ -198,7 +198,11 @@ pub const Instruction = union(enum(u16)) {
                     .operands = try readRestU32(allocator, &body),
                 } };
             },
-            .capability => .{ .capability = try body.takeEnum(types.Capability, .little) },
+            .capability => .{ .capability = body.takeEnum(types.Capability, .little) catch |err| {
+                body.seek -= @sizeOf(u32);
+                std.log.err("Missing capability: {}", .{try body.takeInt(u32, .little)});
+                return err;
+            } },
             .type_void => .{ .type = .{ .result_id = try body.takeInt(u32, .little), .info = .void } },
             .type_bool => .{ .type = .{ .result_id = try body.takeInt(u32, .little), .info = .bool } },
             .type_sampler => .{ .type = .{ .result_id = try body.takeInt(u32, .little), .info = .sampler } },
