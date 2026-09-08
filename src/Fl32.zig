@@ -1,7 +1,4 @@
 const std = @import("std");
-const gm = @import("zap.zig");
-const zut = @import("zut");
-const m = std.math;
 
 const Allocator = std.mem.Allocator;
 
@@ -13,33 +10,34 @@ const Allocator = std.mem.Allocator;
 /// - `f32` array: `data` (distance field values)
 const Fl32 = @This();
 
-height: u32,
-width: u32,
-num_channels: u32 = 1,
+header: Header,
 data: []f32,
 
-const header_id = "FL32";
+const Header = packed struct {
+    height: u32,
+    width: u32,
+    num_channels: u32 = 1,
+    const id = std.mem.readInt(u32, "FL32", .little);
+};
 
 pub fn read(allocator: Allocator, r: *std.Io.Reader) !Fl32 {
-    var header: [4]u8 = undefined;
-    try r.readSliceAll(&header);
+    if (try r.takeInt(u32, .little) != Header.id) return error.InvalidFl32;
 
-    if (std.mem.eql(u8, &header, header_id)) return error.InvalidFl32;
+    const header = try r.takeStruct(Header, .little);
+    const data = try allocator.alloc(f32, header.width * header.height * header.num_channels);
 
-    var self = try zut.mem.packedRead(Fl32, r, "data");
-    self.data = try allocator.alloc(f32, self.width * self.height * self.num_channels);
+    const bytes_read = try r.readSliceShort(std.mem.sliceAsBytes(data));
 
-    const bytes_read = try r.readSliceShort(std.mem.sliceAsBytes(self.data));
-
-    if (bytes_read < self.data.len * @sizeOf(f32)) {
-        try r.readSliceAll(std.mem.sliceAsBytes(self.data)[bytes_read..]);
+    if (bytes_read < data.len * @sizeOf(f32)) {
+        try r.readSliceAll(std.mem.sliceAsBytes(data)[bytes_read..]);
     }
 
-    return self;
+    return .{ .header = header, .data = data };
 }
 
 pub fn write(self: Fl32, w: *std.Io.Writer) !void {
-    _ = try w.write(header_id);
-    try zut.mem.packedWrite(self, w);
+    _ = try w.writeInt(u32, Header.id, .little);
+    try w.writeStruct(self.header, .little);
+    try w.writeAll(std.mem.sliceAsBytes(self.data));
     try w.flush();
 }

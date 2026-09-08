@@ -1,5 +1,4 @@
 const std = @import("std");
-const zut = @import("zut");
 
 const Allocator = std.mem.Allocator;
 
@@ -136,7 +135,7 @@ pub const Instruction = union(enum(u16)) {
             else => return err,
         };
 
-        const code: types.Op = @enumFromInt(@as(u16, @truncate(first_word)));
+        const code: types.Op = @fromBackingInt(@intCast(@as(u16, @truncate(first_word))));
         const word_count: u16 = @intCast(first_word >> 16);
         const remaining = word_count -| 1;
 
@@ -666,8 +665,8 @@ pub const Instruction = union(enum(u16)) {
                 .operand_id = try body.takeInt(u32, .little),
             } },
             else => {
-                std.log.warn("unhandled SPIR-V opcode: {s} ({d})", .{ @tagName(code), @intFromEnum(code) });
-                return .{ .unknown = @intFromEnum(code) };
+                std.log.warn("unhandled SPIR-V opcode: {s} ({d})", .{ @tagName(code), @backingInt(code) });
+                return .{ .unknown = @backingInt(code) };
             },
         };
     }
@@ -696,10 +695,10 @@ fn readImageOperands(allocator: Allocator, r: *std.Io.Reader) ![]types.ImageOper
     var flags: [8]types.ImageOperands = undefined;
     var count: usize = 0;
 
-    inline for (@typeInfo(types.ImageOperands).@"enum".fields) |field| {
-        const bit: u32 = 1 << field.value;
+    inline for (@typeInfo(types.ImageOperands).@"enum".field_values) |v| {
+        const bit: u32 = 1 << v;
         if (mask & bit != 0) {
-            flags[count] = @enumFromInt(field.value);
+            flags[count] = @fromBackingInt(@intCast(v));
             count += 1;
         }
     }

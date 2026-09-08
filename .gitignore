@@ -1,5 +1,6 @@
-zig-out
-.zig-cache
-zig-pkg
-logs
+zig-out/
+.zig-cache/
+zig-pkg/
+logs/
+spirv/
 *.spv*

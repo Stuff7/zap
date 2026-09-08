@@ -2,11 +2,11 @@
     .name = .zap,
     .fingerprint = 0x8ac41f4ecab2455b,
     .version = "0.1.0",
-    .minimum_zig_version = "0.17.0-dev.248+95507faf1",
+    .minimum_zig_version = "0.17.0-dev.2056+79a9897cd",
     .dependencies = .{
         .zut = .{
-            .url = "git+https://github.com/Stuff7/zut.git#aaa90754463648f79efd33a0a077473a82d4a3d5",
-            .hash = "zut-1.0.0-5cLvvo6fAACB8YHN_gdmoXrr3mKNyhjvB7ui-xxefmTr",
+            .url = "git+https://github.com/Stuff7/zut#b9ef8ec81bc16cc01e7c5cbb1b0a709a1c36936f",
+            .hash = "zut-1.0.0-5cLvvvGEAAAct57xXL6oQX6qcrEWc9MFbVMHNFxOcntv",
         },
     },
     .paths = .{ "build.zig", "build.zig.zon", "src" },

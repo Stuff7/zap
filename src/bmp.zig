@@ -1,6 +1,5 @@
 const std = @import("std");
 const zap = @import("zap.zig");
-const zut = @import("zut");
 
 pub fn Bmp(comptime bpp: u6) type {
     return struct {
@@ -23,7 +22,7 @@ pub fn Bmp(comptime bpp: u6) type {
 
         pub fn init(width: usize, height: usize, data: []u8) !@This() {
             const byte_width = bytes_per_px * width;
-            const row_width: usize = @intCast(zut.mem.aligned(@intCast(byte_width), 4));
+            const row_width: usize = @intCast(std.mem.alignForward(usize, @intCast(byte_width), 4));
 
             return @This(){
                 .width = @intCast(width),
@@ -35,18 +34,18 @@ pub fn Bmp(comptime bpp: u6) type {
         }
 
         pub fn write(self: *@This(), w: *std.Io.Writer, info: ?bmp.InfoHeader, palette: ?[]u8) !void {
-            const data_size: u32 = zut.mem.intCast(u32, self.row_width) * zut.mem.intCast(u32, self.height);
-            const palette_size = if (bpp > 8) 0 else (@as(u16, 1) << zut.mem.intCast(u4, bpp)) * 4;
+            const data_size: u32 = @intCast(self.row_width * self.height);
+            const palette_size = if (bpp > 8) 0 else (@as(u16, 1) << @as(u4, @intCast(bpp))) * 4;
             const offset: u32 = @intCast(bmp.FileHeader.len + bmp.InfoHeader.len + palette_size);
 
-            try zut.mem.packedWrite(bmp.FileHeader{ .offset = offset, .size = offset + data_size }, w);
+            try w.writeStruct(bmp.FileHeader{ .offset = offset, .size = offset + data_size }, .little);
             var info_header = info orelse bmp.InfoHeader{};
             info_header.width = @intCast(self.width);
             info_header.height = @intCast(self.height);
             info_header.size = bmp.InfoHeader.len;
             info_header.size_image = @intCast(data_size);
             info_header.bit_count = bpp;
-            try zut.mem.packedWrite(info_header, w);
+            try w.writeStruct(info_header, .little);
 
             if (palette) |p| {
                 _ = try w.write(p);
@@ -66,8 +65,8 @@ pub fn Bmp(comptime bpp: u6) type {
 }
 
 pub const bmp = struct {
-    pub const FileHeader = struct {
-        pub const len = zut.mem.packedSize(FileHeader);
+    pub const FileHeader = packed struct {
+        pub const len = @bitSizeOf(FileHeader) / 8;
 
         type: u16 = std.mem.readInt(u16, "BM", .little),
         size: u32,
@@ -75,8 +74,8 @@ pub const bmp = struct {
         offset: u32,
     };
 
-    pub const InfoHeader = struct {
-        pub const len = zut.mem.packedSize(InfoHeader);
+    pub const InfoHeader = packed struct {
+        pub const len = @bitSizeOf(InfoHeader) / 8;
 
         size: u32 = 0,
         width: i32 = 0,
