@@ -115,6 +115,49 @@ pub const SampledImageCombine = struct {
     sampler_id: u32,
 };
 
+pub const ConstantTrue = struct {
+    result_type_id: u32,
+    result_id: u32,
+};
+
+pub const ConstantFalse = struct {
+    result_type_id: u32,
+    result_id: u32,
+};
+
+pub const ImageQuerySizeLod = struct {
+    result_type_id: u32,
+    result_id: u32,
+    image_id: u32,
+    lod_id: u32,
+};
+
+pub const SDiv = struct {
+    result_type_id: u32,
+    result_id: u32,
+    operand1_id: u32,
+    operand2_id: u32,
+};
+
+pub const ULessThanEqual = struct {
+    result_type_id: u32,
+    result_id: u32,
+    operand1_id: u32,
+    operand2_id: u32,
+};
+
+pub const ControlBarrier = struct {
+    execution_id: u32,
+    memory_id: u32,
+    semantics_id: u32,
+};
+
+pub const Phi = struct {
+    result_type_id: u32,
+    result_id: u32,
+    operands: []u32,
+};
+
 pub const Type = struct {
     result_id: u32,
     info: Info,

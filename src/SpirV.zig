@@ -58,6 +58,8 @@ pub const Instruction = union(enum(u16)) {
     capability: types.Capability = 17,
     type: types.Type,
     type_pointer: types.TypePointer = 32,
+    constant_true: types.ConstantTrue = 41,
+    constant_false: types.ConstantFalse = 42,
     constant: types.Constant = 43,
     constant_composite: types.ConstantComposite = 44,
     spec_constant: types.SpecConstant = 50,
@@ -73,17 +75,22 @@ pub const Instruction = union(enum(u16)) {
     composite_construct: types.CompositeConstruct = 80,
     composite_extract: types.CompositeExtract = 81,
     image_sample_implicit_lod: types.ImageSampleImplicitLod = 87,
+    image_query_size_lod: types.ImageQuerySizeLod = 103,
     fnegate: types.FNegate = 127,
     fadd: types.FAdd = 129,
     fmul: types.FMul = 133,
+    sdiv: types.SDiv = 135,
     vector_times_scalar: types.VectorTimesScalar = 142,
     matrix_times_vector: types.MatrixTimesVector = 145,
     matrix_times_matrix: types.MatrixTimesMatrix = 146,
-    fwidth: types.FWidth = 209,
+    uless_than_equal: types.ULessThanEqual = 178,
     shift_right_logical: types.ShiftRightLogical = 194,
+    fwidth: types.FWidth = 209,
     bitwise_and: types.BitwiseAnd = 199,
     ford_greater_than: types.FOrdGreaterThan = 186,
     convert_uto_f: types.ConvertUToF = 112,
+    control_barrier: types.ControlBarrier = 224,
+    phi: types.Phi = 245,
     selection_merge: types.SelectionMerge = 247,
     label: types.Label = 248,
     branch_conditional: types.BranchConditional = 250,
@@ -664,6 +671,45 @@ pub const Instruction = union(enum(u16)) {
                 .result_id = try body.takeInt(u32, .little),
                 .operand_id = try body.takeInt(u32, .little),
             } },
+            .constant_true => .{ .constant_true = .{
+                .result_type_id = try body.takeInt(u32, .little),
+                .result_id = try body.takeInt(u32, .little),
+            } },
+            .constant_false => .{ .constant_false = .{
+                .result_type_id = try body.takeInt(u32, .little),
+                .result_id = try body.takeInt(u32, .little),
+            } },
+            .image_query_size_lod => .{ .image_query_size_lod = .{
+                .result_type_id = try body.takeInt(u32, .little),
+                .result_id = try body.takeInt(u32, .little),
+                .image_id = try body.takeInt(u32, .little),
+                .lod_id = try body.takeInt(u32, .little),
+            } },
+            .sdiv => .{ .sdiv = .{
+                .result_type_id = try body.takeInt(u32, .little),
+                .result_id = try body.takeInt(u32, .little),
+                .operand1_id = try body.takeInt(u32, .little),
+                .operand2_id = try body.takeInt(u32, .little),
+            } },
+            .uless_than_equal => .{ .uless_than_equal = .{
+                .result_type_id = try body.takeInt(u32, .little),
+                .result_id = try body.takeInt(u32, .little),
+                .operand1_id = try body.takeInt(u32, .little),
+                .operand2_id = try body.takeInt(u32, .little),
+            } },
+            .control_barrier => .{ .control_barrier = .{
+                .execution_id = try body.takeInt(u32, .little),
+                .memory_id = try body.takeInt(u32, .little),
+                .semantics_id = try body.takeInt(u32, .little),
+            } },
+            .phi => .{
+                .phi = .{
+                    .result_type_id = try body.takeInt(u32, .little),
+                    .result_id = try body.takeInt(u32, .little),
+                    // Phi uses pairs of [Variable, Parent]
+                    .operands = try readRestU32(allocator, &body),
+                },
+            },
             else => {
                 std.log.warn("unhandled SPIR-V opcode: {s} ({d})", .{ @tagName(code), @backingInt(code) });
                 return .{ .unknown = @backingInt(code) };
